@@ -1,0 +1,379 @@
+<!-- public/pages/impulse.html -->
+<div class="container-fluid ps-2 pe-0 d-flex flex-column container-min-height"> <!-- MODIFICADO: Adicionado ps-2 pe-0 para alinhar com a sidebar, d-flex flex-column e min-height para preencher a altura da viewport menos navbar/footer. -->
+    <!-- Div onde o painel de informações do transformador será injetado -->
+    <div id="transformer-info-impulse-page" class="mb-2"></div>
+
+    <!-- Main module card -->
+    <div class="card flex-grow-1 d-flex flex-column"> <!-- MODIFICADO: Adicionado flex-grow-1 d-flex flex-column para que o card principal se expanda e organize seu conteúdo. -->        <div class="card-header">
+            <h6 class="text-center m-0 flex-grow-1 card-header-title">ANÁLISE DE IMPULSO</h6>
+            <button type="button" class="btn btn-sm btn-outline-light ms-2" title="Ajuda sobre Simulação de Impulso">
+                <i class="fas fa-question-circle"></i>
+            </button>
+        </div>
+        <div class="card-body d-flex flex-column"> <!-- Mantido d-flex flex-column para organizar o conteúdo interno. -->
+            <div class="row mb-1 border-bottom align-items-center">
+                <div class="col-2"></div>
+                <div class="col-8">
+                    <h6 class="text-primary m-0 text-center text-ellipsis">Simulação de Ensaios de Impulso CDYH-2400kV/360kJ Impulse Voltage Test System</h6>
+                </div>
+                <div class="col-2"></div>
+            </div>
+
+            <div class="row g-2 flex-grow-1 d-flex align-items-stretch"> <!-- Mantido: flex-grow-1 d-flex align-items-stretch -->
+                <!-- Coluna 1: Parâmetros de entrada -->
+                <div class="col-md-3 pe-1 d-flex flex-column"> <!-- Mantido: d-flex flex-column -->
+                    <div class="card mb-1 flex-grow-1"> <!-- Mantido: flex-grow-1 -->
+                        <div class="card-header p-1 text-center fw-bold fs-6">Parâmetros Básicos</div>
+                        <div class="card-body p-3">
+                            <div class="row mb-0">
+                                <div class="col-12">
+                                    <label class="form-label">Tipo:</label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="impulseType" id="impulseTypeLightning" value="lightning" checked>
+                                        <label class="form-check-label" for="impulseTypeLightning">Atmosférico (LI)</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="impulseType" id="impulseTypeSwitching" value="switching">
+                                        <label class="form-check-label" for="impulseTypeSwitching">Manobra (SI)</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="impulseType" id="impulseTypeChopped" value="chopped">
+                                        <label class="form-check-label" for="impulseTypeChopped">Cortado (LIC)</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-0">
+                                <div class="col-6">
+                                    <label for="test-voltage" class="form-label">Tensão (kV):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="test-voltage" value="1200" min="0" step="10">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-chevron-up" id="voltage-up"></i>
+                                            <i class="fas fa-chevron-down" id="voltage-down"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label for="generator-config" class="form-label">Config.:</label>
+                                    <select class="form-select dark-dropdown" id="generator-config">
+                                        <!-- Options from GENERATOR_CONFIGURATIONS -->
+                                        <option value="6S-1P" selected>6S-1P</option>
+                                        <option value="12S-1P">12S-1P</option>
+                                        <!-- ... more options -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mb-0">
+                                <div class="col-6">
+                                    <label for="simulation-model-type" class="form-label">Modelo:</label>
+                                    <select class="form-select dark-dropdown" id="simulation-model-type">
+                                        <option value="hybrid" selected>RLC+K</option>
+                                        <option value="rlc">RLC</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label for="test-object-capacitance" class="form-label">Cap. DUT (pF):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="test-object-capacitance" value="3000" min="0" step="100">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-chevron-up" id="dut-cap-up"></i>
+                                            <i class="fas fa-chevron-down" id="dut-cap-down"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <label for="shunt-resistor" class="form-label">Shunt (Ω):</label>
+                                    <select class="form-select dark-dropdown" id="shunt-resistor">
+                                        <!-- Options from SHUNT_OPTIONS -->
+                                        <option value="0.01" selected>0.01 Ω</option>
+                                        <option value="0.005">0.005 Ω</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label for="stray-capacitance" class="form-label">Cap. Parasita (pF):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="stray-capacitance" value="400" min="0" step="50">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-chevron-up" id="stray-cap-up"></i>
+                                            <i class="fas fa-chevron-down" id="stray-cap-down"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-1 flex-grow-1">
+                        <div class="card-header p-1 text-center fw-bold fs-6">Resistores e Ajustes</div>
+                        <div class="card-body p-3">
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <label for="front-resistor-expression" class="form-label">Rf (por coluna):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" id="front-resistor-expression" value="15" placeholder="Ex: 15 ou 30||30">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-chevron-up" id="rf-up"></i>
+                                            <i class="fas fa-chevron-down" id="rf-down"></i>
+                                        </span>
+                                    </div>
+                                    <small id="front-resistor-help" class="form-text text-muted">Ajuste da expressão</small>
+                                </div>
+                                <div class="col-6">
+                                    <label for="tail-resistor-expression" class="form-label">Rt (por coluna):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" id="tail-resistor-expression" value="100" placeholder="Ex: 100 ou 50+50">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-chevron-up" id="rt-up"></i>
+                                            <i class="fas fa-chevron-down" id="rt-down"></i>
+                                        </span>
+                                    </div>
+                                    <small id="tail-resistor-help" class="form-text text-muted">Ajuste da expressão</small>
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-6">
+                                    <label for="inductance-adjustment-factor" class="form-label">Aj. L (fator):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="inductance-adjustment-factor" value="1.0" min="0.1" max="5.0" step="0.1">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-chevron-up" id="ajl-up"></i>
+                                            <i class="fas fa-chevron-down" id="ajl-down"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label for="tail-resistance-adjustment-factor" class="form-label">Aj. Rt (fator):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="tail-resistance-adjustment-factor" value="1.0" min="0.1" max="5.0" step="0.1">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-chevron-up" id="ajrt-up"></i>
+                                            <i class="fas fa-chevron-down" id="ajrt-down"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-outline-info btn-sm w-100" id="suggest-resistors-btn">Sugerir Resistores</button>
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <div id="suggested-resistors-output" class="p-1 border text-light" style="font-size: 0.7rem; max-height: 60px; overflow-y: auto; background-color: var(--background-card); margin-top: 3px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna 2: Gráficos e Indutâncias -->
+                <div class="col-md-5 px-1 h-100 d-flex flex-column"> <!-- Mantido: h-100 d-flex flex-column -->
+                    <div class="row mb-1 flex-grow-0">
+                        <div class="col-9">
+                            <h6 id="waveform-title-display" class="m-0 text-center" style="font-size: 0.9rem; color: var(--text-light);">Forma de Onda de Tensão e Corrente</h6>
+                        </div>
+                        <div class="col-3 d-flex align-items-center justify-content-end">
+                            <button type="button" class="btn btn-primary btn-sm float-end" id="simulate-button">
+                                <span id="simulate-button-text">Simular Forma de Onda</span>
+                                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true" id="simulate-spinner"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row mb-1 flex-grow-0">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-center flex-wrap">
+                                <div class="alert alert-danger py-1 px-2 m-0 me-1 d-none" style="font-size: 0.75rem;" id="compliance-overall-alert">Não Conforme</div>
+                                <div class="alert alert-warning py-1 px-2 m-0 me-1 d-none" style="font-size: 0.75rem;" id="oscillation-warning-alert"><i class="fas fa-wave-square me-1"></i>Oscilatório</div>
+                                <div class="alert alert-success py-1 px-2 m-0 me-1 d-none" style="font-size: 0.75rem;" id="energy-compliance-alert">Energia OK</div>
+                                <div class="alert alert-danger py-1 px-2 m-0 d-none" style="font-size: 0.75rem;" id="shunt-voltage-alert"><i class="fas fa-exclamation-triangle me-1"></i>V Shunt > 5V!</div>
+                            </div>
+                        </div>
+                    </div>                    <div class="row mb-1 flex-grow-1">
+                        <div class="col-12 h-100 d-flex flex-column">
+                            <div id="loading-graph" class="flex-grow-1 d-flex flex-column">
+                                <!-- Gráfico de Tensão -->
+                                <div class="graph-container mb-1 flex-grow-1" style="height: 300px;" id="voltage-graph-container">
+                                    <div id="voltage-spinner" class="d-flex justify-content-center align-items-center h-100">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Carregando...</span>
+                                        </div>
+                                    </div>
+                                    <div id="impulse-waveform" class="h-100 w-100"></div>
+                                </div>
+                                <!-- Gráfico de Corrente -->
+                                <div class="graph-container flex-grow-1" style="height: 250px;" id="current-graph-container">
+                                    <div id="current-spinner" class="d-flex justify-content-center align-items-center h-100">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Carregando...</span>
+                                        </div>
+                                    </div>
+                                    <div id="impulse-current" class="h-100 w-100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna 3: Resultados -->
+                <div class="col-md-4 ps-1 d-flex flex-column">
+                    <div class="card mb-1 flex-grow-1">
+                        <div class="card-header p-1 text-center fw-bold fs-6">Indutâncias e Componentes Adicionais</div>
+                        <div class="card-body p-3">
+                            <div class="row g-2 mb-1">
+                                <div class="col-3">
+                                    <label for="external-inductance" class="form-label">L Extra (μH):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="external-inductance" value="10" min="0" step="1">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-chevron-up" id="lext-up"></i>
+                                            <i class="fas fa-chevron-down" id="lext-down"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div id="inductor-container">
+                                        <label for="inductor" class="form-label">Indutor Extra:</label>
+                                        <select class="form-select dark-dropdown" id="inductor">
+                                            <!-- Options from INDUCTORS_OPTIONS -->
+                                            <option value="0" selected>Nenhum</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <label for="transformer-inductance" class="form-label">L Carga/Trafo (H):</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="transformer-inductance" value="0.05" min="0" step="0.01">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-chevron-up" id="ltrafo-up"></i>
+                                            <i class="fas fa-chevron-down" id="ltrafo-down"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-3 d-flex align-items-end">
+                                    <button type="button" class="btn btn-outline-info btn-sm w-100 mt-auto" id="show-transformer-calc">
+                                        <i class="fas fa-calculator me-1"></i> Calcular L Trafo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-1">
+                                <div class="col-3">
+                                    <div id="gap-distance-container" style="display: none;">
+                                        <label for="gap-distance" class="form-label">Gap Corte (cm):</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control" id="gap-distance" value="4.0" min="0.1" step="0.5">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-chevron-up" id="gap-up"></i>
+                                                <i class="fas fa-chevron-down" id="gap-down"></i>
+                                            </span>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-info btn-sm w-100 mt-1" id="calculate-gap-btn" style="font-size: 0.7rem;">
+                                            <i class="fas fa-calculator me-1"></i>Calcular Gap
+                                        </button>
+                                        <small class="form-text text-muted" style="font-size: 0.65rem;">Gap calculado para corte entre 2-6 μs</small>
+                                    </div>
+                                    <div id="capacitor-si-container" style="display: none;">
+                                        <label for="si-capacitor-value" class="form-label">Cap. Acopl. (pF):</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control" id="si-capacitor-value" value="600" min="0" step="100">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-chevron-up" id="si-cap-up"></i>
+                                                <i class="fas fa-chevron-down" id="si-cap-down"></i>
+                                            </span>
+                                        </div>
+                                        <small class="form-text text-muted" style="font-size: 0.65rem;">(em paralelo com Rf)</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-1">
+                                <div class="col-12">
+                                    <div class="collapse" id="transformer-calc-collapse">
+                                        <div class="border p-2 mt-1 rounded" style="background-color: var(--background-card-header); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                            <div class="row mb-1 gx-2">
+                                                <div class="col-6">
+                                                    <label for="transformer-voltage" class="form-label">Tensão (kV)</label>
+                                                    <input type="number" class="form-control" id="transformer-voltage" value="138" min="0" step="1">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label for="transformer-power" class="form-label">Potência (MVA)</label>
+                                                    <input type="number" class="form-control" id="transformer-power" value="50" min="0" step="1">
+                                                </div>
+                                            </div>
+                                            <div class="row mb-1 gx-2">
+                                                <div class="col-6">
+                                                    <label for="transformer-impedance" class="form-label">Z (%)</label>
+                                                    <input type="number" class="form-control" id="transformer-impedance" value="12" min="0" step="0.1">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label for="transformer-frequency" class="form-label">Freq. (Hz)</label>
+                                                    <input type="number" class="form-control" id="transformer-frequency" value="60" min="50" step="10">
+                                                </div>
+                                            </div>
+                                            <div class="row mb-1 gx-2">
+                                                <div class="col-6">
+                                                    <button type="button" class="btn btn-info btn-sm w-100" id="calculate-inductance">Calcular L</button>
+                                                </div>
+                                                <div class="col-6">
+                                                    <button type="button" class="btn btn-info btn-sm w-100" id="use-transformer-data">Usar Dados Trafo</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div id="calculated-inductance-display" class="text-center text-muted" style="font-size: 0.7rem; min-height: 1.2rem;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning py-1 px-2 m-0 mt-2" style="font-size: 0.7rem; display: none;" id="si-model-warning-alert">
+                                Atenção: Modelo SI é experimental e pode não refletir todos os efeitos.
+                            </div>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs mb-0 custom-tabs" id="resultsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tab-analysis-tab" data-bs-toggle="tab" data-bs-target="#tab-analysis-content" type="button" role="tab" aria-controls="tab-analysis-content" aria-selected="true">Análise</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-circuit-tab" data-bs-toggle="tab" data-bs-target="#tab-circuit-content" type="button" role="tab" aria-controls="tab-circuit-content" aria-selected="false">Circuito</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-energy-tab" data-bs-toggle="tab" data-bs-target="#tab-energy-content" type="button" role="tab" aria-controls="tab-energy-content" aria-selected="false">Energia</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content impulse-tab-content flex-grow-1" style="overflow-y: auto; font-size: 0.7rem; padding: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 0 0 3px 3px; border: 1px solid var(--border-color); border-top: none; background-color: var(--background-card); color: var(--text-dark); min-height: 150px; max-height: unset;">
+                        <div class="tab-pane fade show active" id="tab-analysis-content" role="tabpanel" aria-labelledby="tab-analysis-tab">
+                            <div id="waveform-analysis-table">
+                                <div class="alert alert-info m-2" style="font-size: 0.7rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Simule para ver a análise.</div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="tab-circuit-content" role="tabpanel" aria-labelledby="tab-circuit-tab">
+                            <div id="circuit-parameters-display">
+                                <div class="alert alert-info m-2" style="font-size: 0.7rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Simule para ver os parâmetros.</div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="tab-energy-content" role="tabpanel" aria-labelledby="tab-energy-tab">
+                            <div id="energy-details-table">
+                                <div class="alert alert-info m-2" style="font-size: 0.7rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Simule para ver detalhes de energia.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Intervalo para auto-simulação (Seria controlado por JS) -->
+    <div id='auto-simulate-interval' style="display: none;"></div>
+</div>

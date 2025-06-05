@@ -1,0 +1,179 @@
+<!-- public/pages/applied_voltage.html -->
+<div class="container-fluid ps-2 pe-0"> <!-- MODIFICADO: Adicionado ps-2 pe-0 para alinhar com a sidebar -->
+    <!-- Div onde o painel de informações do transformador será injetado -->
+    <div id="transformer-info-applied_voltage-page" class="mb-2"></div>
+    <!-- Título principal do módulo -->    <div class="card">        <div class="card-header d-flex align-items-center">
+            <h6 class="text-center m-0 flex-grow-1 card-header-title">TENSÃO APLICADA</h6>
+            <button type="button" class="btn btn-sm btn-outline-light ms-2" title="Ajuda sobre Tensão Aplicada">
+                <i class="fas fa-question-circle"></i>
+            </button>
+        </div><div class="card-body">
+            <!-- Linha principal para dividir Entradas e Sistema Ressonante -->
+            <div class="row mb-2">
+                <!-- Coluna Esquerda: Entradas (1/4 da largura) -->
+                <div class="col-md-3 pe-1">
+                    <div class="card h-100">
+                        <div class="card-header p-1 fw-bold fs-6">Parâmetros de Entrada</div>
+                        <div class="card-body" id="applied-voltage-form">
+                            <h6 class="text-center mb-1" style="font-size: 0.9rem; font-weight: bold; color: var(--primary-color);">Capacitâncias</h6>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7 text-end">
+                                    <label for="cap-at" class="form-label">Capacitância AT - GND (pF):</label>
+                                </div>
+                                <div class="col-5">
+                                    <input type="number" class="form-control form-control-sm" id="cap-at" placeholder="Cap. AT">
+                                </div>
+                            </div>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7 text-end">
+                                    <label for="cap-bt" class="form-label">Capacitância BT - GND (pF):</label>
+                                </div>
+                                <div class="col-5">
+                                    <input type="number" class="form-control form-control-sm" id="cap-bt" placeholder="Cap. BT">
+                                </div>
+                            </div>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7 text-end">
+                                    <label for="cap-ter" class="form-label">Capacitância Ter. - GND (pF):</label>
+                                </div>
+                                <div class="col-5">
+                                    <input type="number" class="form-control form-control-sm" id="cap-ter" placeholder="Cap. Terciário">
+                                </div>
+                            </div>
+
+                            <h6 class="text-center my-1" style="font-size: 0.9rem; font-weight: bold; color: var(--primary-color);">Tensões de Ensaio</h6>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7 text-end">
+                                    <label class="form-label">Tensão de ensaio AT (kV):</label>
+                                </div>
+                                <div class="col-5">
+                                    <div id="tensao-at-display" class="form-control-plaintext text-light" style="font-size: 0.7rem; padding: 0.2rem 0;">-</div>
+                                </div>
+                            </div>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7 text-end">
+                                    <label class="form-label">Tensão de ensaio BT (kV):</label>
+                                </div>
+                                <div class="col-5">
+                                    <div id="tensao-bt-display" class="form-control-plaintext text-light" style="font-size: 0.7rem; padding: 0.2rem 0;">-</div>
+                                </div>
+                            </div>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7 text-end">
+                                    <label class="form-label">Tensão de ensaio Ter. (kV):</label>
+                                </div>
+                                <div class="col-5">
+                                    <div id="tensao-terciario-display" class="form-control-plaintext text-light" style="font-size: 0.7rem; padding: 0.2rem 0;">-</div>
+                                </div>
+                            </div>
+                            <div class="row g-1 mb-1">
+                                <div class="col-7 text-end">
+                                    <label class="form-label">Frequência de ensaio (Hz):</label>
+                                </div>
+                                <div class="col-5">
+                                    <div id="frequencia-display" class="form-control-plaintext text-light" style="font-size: 0.7rem; padding: 0.2rem 0;">60 Hz</div>
+                                </div>
+                            </div>
+                            <div class="row g-2 justify-content-center">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary w-100 mt-3" id="calc-applied-voltage-btn">Calcular</button>
+                                </div>
+                            </div>
+                            <div id="applied-voltage-error-message" class="mt-2 text-danger small"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Coluna Direita: Sistema Ressonante (3/4 da largura) -->
+                <div class="col-md-9 ps-1">
+                    <div class="card h-100">
+                        <div class="card-header p-1 text-center fw-bold fs-6">Sistema Ressonante High Volt WRM 1800/1350-900-450</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div style="font-size: 0.7rem; font-weight: bold; margin-bottom: 0.3rem; color: var(--text-light);">Configurações disponíveis:</div>
+                                    <p style="font-size: 0.6rem; margin-bottom: 0.3rem; color: var(--text-light); font-style: italic;">
+                                        Nota: Para Módulos 1||2||3 (3 Par.), a tensão máxima varia conforme a capacitância:
+                                        270 kV para 2,0-39,3 nF e 450 kV para 2,0-23,6 nF.
+                                    </p>
+                                    <table class="table table-bordered table-sm mb-3" style="background-color: var(--background-table-row-even);">
+                                        <thead>
+                                            <tr>
+                                                <th style="font-size: 0.7rem; padding: 0.2rem; background-color: var(--background-card-header); color: var(--text-light);">Configuração</th>
+                                                <th style="font-size: 0.7rem; padding: 0.2rem; background-color: var(--background-card-header); color: var(--text-light);">Tensão Máx (kV)</th>
+                                                <th style="font-size: 0.7rem; padding: 0.2rem; background-color: var(--background-card-header); color: var(--text-light);">Capacitância (nF)</th>
+                                                <th style="font-size: 0.7rem; padding: 0.2rem; background-color: var(--background-card-header); color: var(--text-light);">Corrente (A)</th>
+                                                <th style="font-size: 0.7rem; padding: 0.2rem; background-color: var(--background-card-header); color: var(--text-light);">Potência (kVA)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="background-color: var(--background-card-light);">
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">Módulos 1+2+3 (Série)</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">1350</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">0,22 - 2,6</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">1,33</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">1800</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">Módulos 1+2 (Série)</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">900</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">0,3 - 6,5</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">1,33</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">1200</td>
+                                            </tr>
+                                            <tr style="background-color: var(--background-card-light);">
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">Módulo 1 (1 em Par.)</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">450</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">0,7 - 13,1</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">1,33</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">600</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">Módulos 1||2||3 (3 Par.)</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">450</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">2,0 - 23,6</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">4,0</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">1800</td>
+                                            </tr>
+                                            <tr style="background-color: var(--background-card-light);">
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">Módulos 1||2||3 (3 Par.)</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">270</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">2.0 - 39,3</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">4,0</td>
+                                                <td style="font-size: 0.7rem; padding: 0.2rem;">1800</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div style="font-size: 0.7rem; font-weight: bold; margin-bottom: 0.3rem; color: var(--text-light); text-align: center;">Recomendação do Sistema:</div>
+                                    <div id="resonant-system-recommendation" style="font-size: 0.7rem; color: var(--text-light); text-align: center;">
+                                        <!-- Conteúdo preenchido por JavaScript -->
+                                        Aguardando cálculo...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Linha para Resultados -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header p-1 text-center fw-bold fs-6">Resultados</div>
+                        <div class="card-body">
+                            <div id="applied-voltage-results" style="font-size: 0.7rem; color: var(--text-light);">
+                                <!-- Conteúdo preenchido por JavaScript -->
+                                <div class="text-muted text-center py-3">Aguardando cálculo...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Componente oculto para tipo de transformador (se necessário para outros callbacks) -->
+            <input type="hidden" id="tipo_transformador">
+        </div>
+    </div>
+</div>

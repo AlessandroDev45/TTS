@@ -1,0 +1,207 @@
+<!-- public/pages/temperature_rise.html -->
+<div class="container-fluid ps-2 pe-0"> <!-- MODIFICADO: Adicionado ps-2 pe-0 para alinhar com a sidebar -->
+    <!-- Div onde o painel de informações do transformador será injetado -->
+    <div id="transformer-info-temperature_rise-page" class="mb-2"></div>
+
+    <!-- Título principal do módulo -->
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <h6 class="card-header-title text-center m-0 flex-grow-1">ANÁLISE DE ELEVAÇÃO DE TEMPERATURA</h6>
+            <button type="button" class="btn btn-sm btn-outline-light ms-2" title="Ajuda sobre Elevação de Temperatura">
+                <i class="fas fa-question-circle"></i>
+            </button>
+        </div>        <div class="card-body" id="temperature-rise-form">
+            <!-- Layout principal com duas colunas -->
+            <div class="row g-2">
+                <!-- Coluna Esquerda: Entradas e Diagrama -->
+                <div class="col-md-6 pe-1">
+                    <!-- Card para Dados de Entrada -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="card-header-title m-0">Dados de Entrada do Ensaio</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info alert-info-small">
+                                <p class="mb-0 text-small">Cálculos baseados na NBR 5356-2 / IEC 60076-2.</p>
+                            </div>
+                            
+                            <!-- Seção 1: Condições Ambientais e Material -->
+                            <div class="section-subtitle">Condições Ambientais e Material</div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label for="temp-amb" class="form-label">Temp. Ambiente (Θa) (°C):</label>
+                                    <input type="number" class="form-control form-control-sm" id="temp-amb" placeholder="Ex: 25.0">
+                                </div>
+                                <div class="col-6">
+                                    <label for="winding-material" class="form-label">Material Enrolamento:</label>
+                                    <select class="form-select form-select-sm dark-dropdown" id="winding-material">
+                                        <option value="cobre" selected>Cobre</option>
+                                        <option value="aluminio">Alumínio</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Seção 2: Medições a Frio -->
+                            <div class="section-subtitle">Medições a Frio</div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label for="res-cold" class="form-label">Res. Fria (Rc) (Ohm):</label>
+                                    <input type="number" class="form-control form-control-sm" id="res-cold" placeholder="Ohm @ Θc" step="any">
+                                </div>
+                                <div class="col-6">
+                                    <label for="temp-cold" class="form-label">Temp. Ref. Fria (Θc) (°C):</label>
+                                    <input type="number" class="form-control form-control-sm" id="temp-cold" placeholder="Temp. Rc">
+                                </div>
+                            </div>
+
+                            <!-- Seção 3: Medições a Quente -->
+                            <div class="section-subtitle">Medições a Quente</div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label for="res-hot" class="form-label">Res. Quente (Rw) (Ohm):</label>
+                                    <input type="number" class="form-control form-control-sm" id="res-hot" placeholder="Ohm @ t=0" step="any">
+                                    <div class="text-small mt-1">Resistência extrapolada para t=0 após desligamento (conforme NBR 5356-2)</div>
+                                </div>
+                                <div class="col-6">
+                                    <label for="temp-top-oil" class="form-label">Temp. Topo Óleo (Θoil) (°C):</label>
+                                    <input type="number" class="form-control form-control-sm" id="temp-top-oil" placeholder="Final">
+                                </div>
+                            </div>
+
+                            <!-- Seção 4: Parâmetro para Constante de Tempo -->
+                            <div class="section-subtitle">Parâmetro para Constante de Tempo Térmica</div>
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label for="delta-theta-oil-max" class="form-label">Elevação Máx Óleo (ΔΘoil_max) (K):</label>
+                                    <input type="number" class="form-control form-control-sm" id="delta-theta-oil-max" placeholder="Opcional p/ τ₀" step="0.1">
+                                    <div class="text-small mt-1">Elevação final do óleo sobre o ambiente (da 1ª etapa do ensaio). Necessário para calcular τ₀.</div>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <button class="btn btn-primary w-100" id="limpar-temp-rise">Calcular Elevação</button>
+                                </div>
+                            </div>
+                            <div id="temp-rise-error-message" class="mt-2 text-danger text-small"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card para Diagrama Explicativo -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-header-title m-0">Diagrama de Elevação de Temperatura</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="diagram-placeholder text-center">
+                                <i class="fas fa-temperature-high fa-4x text-muted"></i>
+                                <p class="mt-2 text-small">Diagrama de Elevação de Temperatura</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>                
+                <!-- Coluna Direita: Resultados e Fórmulas -->
+                <div class="col-md-6 ps-1">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="card-header-title m-0">Resultados Calculados</h6>
+                        </div>
+                        <div class="card-body">
+                            <!-- Seção 1: Temperaturas e Elevações -->
+                            <div class="section-subtitle">Temperaturas e Elevações</div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-7">
+                                            <label class="form-label">Temp. Média Enrol. Final (Θw):</label>
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="number" class="form-control form-control-sm" id="avg-winding-temp" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-7">
+                                            <label class="form-label">Elevação Média Enrol. (ΔΘw):</label>
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="number" class="form-control form-control-sm" id="avg-winding-rise" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-7">
+                                            <label class="form-label">Elevação Topo Óleo (ΔΘoil):</label>
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="number" class="form-control form-control-sm" id="top-oil-rise" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Seção 2: Parâmetros Térmicos -->
+                            <div class="section-subtitle section-subtitle-spaced">Parâmetros Térmicos</div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-7">
+                                            <label class="form-label">Perdas Totais Usadas (Ptot):</label>
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="number" class="form-control form-control-sm" id="ptot-used" readonly placeholder="kW">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-7">
+                                            <label class="form-label">Const. Tempo Térmica (τ₀):</label>
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="number" class="form-control form-control-sm" id="tau0-result" readonly placeholder="horas">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Seção 3: Fórmulas Utilizadas -->
+                            <div class="section-subtitle section-subtitle-spaced">Fórmulas Utilizadas</div>
+                            <div class="card">
+                                <div class="card-body p-2">
+                                    <p class="text-small mb-2">
+                                        <span class="fw-bold">Temperatura Média do Enrolamento:</span><br>
+                                        Θw = Θa + [(Rw/Rc) × (C + Θc) - C]
+                                    </p>
+                                    <p class="text-small mb-2">
+                                        <span class="fw-bold">Elevação Média do Enrolamento:</span><br>
+                                        ΔΘw = Θw - Θa
+                                    </p>
+                                    <p class="text-small mb-2">
+                                        <span class="fw-bold">Elevação do Topo do Óleo:</span><br>
+                                        ΔΘoil = Θoil - Θa
+                                    </p>
+                                    <p class="text-small mb-0">
+                                        <span class="fw-bold">Constante de Tempo Térmica:</span><br>
+                                        τ₀ = 0.132 × (mT - 0.5 × mO) × ΔΘoil_max / Ptot
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Notas Explicativas -->
+                            <hr class="my-3">
+                            <div class="alert alert-light py-2 px-3 mt-2 mb-0">
+                                <p class="text-small mb-0">
+                                    <strong>Nota 1:</strong> Cálculos conforme NBR 5356-2. Rw deve ser o valor extrapolado para t=0.<br>
+                                    <strong>Nota 2:</strong> O cálculo de τ₀ requer ΔΘoil_max, Pesos (Dados Básicos) e Perdas Totais (Perdas).<br>
+                                    <strong>Nota 3:</strong> C = 234,5 para cobre e 225 para alumínio.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

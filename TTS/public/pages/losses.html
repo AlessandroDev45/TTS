@@ -1,0 +1,216 @@
+<!-- public/pages/losses.html -->
+<div class="container-fluid ps-2 pe-0 d-flex flex-column container-full-height"> <!-- MODIFICADO: Adicionado ps-2 pe-0 para alinhar com a sidebar -->
+<!-- Div onde o painel de informações do transformador será injetado por JS/um template engine -->
+    <div id="transformer-info-losses-page" class="mb-2"></div>
+    <!-- Divs ocultas para compatibilidade global -->
+    <div style="display: none;">
+        <div id="transformer-info-losses"></div>
+        <div id="transformer-info-impulse"></div>
+        <div id="transformer-info-dieletric"></div>
+        <div id="transformer-info-applied"></div>
+        <div id="transformer-info-induced"></div>
+        <div id="transformer-info-short-circuit"></div>
+        <div id="transformer-info-temperature-rise"></div>
+        <div id="transformer-info-comprehensive"></div>
+    </div>
+    <!-- Div onde o painel de informações do transformador será injetado -->
+    <!-- Divs ocultas para compatibilidade global -->
+    <div style="display: none;">
+        <div id="transformer-info-losses"></div>
+        <div id="transformer-info-impulse"></div>
+        <div id="transformer-info-dieletric"></div>
+        <div id="transformer-info-applied"></div>
+        <div id="transformer-info-induced"></div>
+        <div id="transformer-info-short-circuit"></div>
+        <div id="transformer-info-temperature-rise"></div>
+        <div id="transformer-info-comprehensive"></div>
+    </div>    <div class="card flex-grow-1 d-flex flex-column"> <!-- MODIFICADO -->
+        <div class="card-header d-flex align-items-center">
+            <h5 class="text-center m-0 flex-grow-1 card-header-title">ANÁLISE DE PERDAS</h5>
+            <button type="button" class="btn btn-sm btn-outline-light ms-2" title="Ajuda sobre Análise de Perdas">
+                <i class="fas fa-question-circle"></i>
+            </button>
+        </div>
+        <div class="card-body d-flex flex-column"> <!-- Mantido -->
+            <ul class="nav nav-tabs mb-3" id="lossesTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="perdas-vazio-tab" data-bs-toggle="tab" data-bs-target="#perdas-vazio-content" type="button" role="tab" aria-controls="perdas-vazio-content" aria-selected="true">Perdas em Vazio</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="perdas-carga-tab" data-bs-toggle="tab" data-bs-target="#perdas-carga-content" type="button" role="tab" aria-controls="perdas-carga-content" aria-selected="false">Perdas em Carga</button>
+                </li>
+            </ul>
+
+            <div class="tab-content losses-tab-content-custom" id="lossesTabContent"> <!-- MODIFICADO -->
+                <!-- Tab Perdas em Vazio -->
+                <div class="tab-pane fade show active d-flex flex-column flex-grow-1" id="perdas-vazio-content" role="tabpanel" aria-labelledby="perdas-vazio-tab"> <!-- MODIFICADO -->
+                    <div class="row g-2 mb-2 align-items-stretch flex-grow-1"> <!-- Mantido flex-grow-1 para absorver espaço -->
+                        <div class="col-md-4 pe-1">
+                            <div class="card h-100 d-flex flex-column">
+                                <div class="card-header">
+                                    <h6 class="text-center m-0 card-header-title">PARÂMETROS DE PERDAS EM VAZIO</h6>
+                                </div>
+                                <div class="card-body p-3 flex-grow-1 d-flex flex-column">
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="perdas-vazio-kw" class="form-label">Perdas em Vazio (kW):</label>
+                                        </div>                                        <div class="col-3">
+                                            <input type="number" class="form-control form-control-losses" id="perdas-vazio-kw" placeholder="Perdas vazio">
+                                        </div>
+                                    </div>
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="peso-projeto-Ton" class="form-label">Peso do Núcleo (Ton):</label>
+                                        </div>                                        <div class="col-3">
+                                            <input type="number" class="form-control form-control-losses" id="peso-projeto-Ton" placeholder="Peso núcleo">
+                                        </div>
+                                    </div>
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="corrente-excitacao" class="form-label">Corrente de Excitação (%):</label>
+                                        </div>                                        <div class="col-3">
+                                            <input type="number" class="form-control form-control-losses" id="corrente-excitacao" placeholder="Corrente excitação">
+                                        </div>
+                                    </div>
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="inducao-nucleo" class="form-label">Indução do Núcleo (T):</label>
+                                        </div>                                        <div class="col-3">
+                                            <input type="number" class="form-control form-control-losses" id="inducao-nucleo" placeholder="Ex.: 1.7">
+                                        </div>
+                                    </div>
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="corrente-excitacao-1-1" class="form-label">Corrente de Excitação 1.1pu (%):</label>
+                                        </div>                                        <div class="col-3">
+                                            <input type="number" class="form-control form-control-losses" id="corrente-excitacao-1-1" placeholder="Corrente 1.1pu">
+                                        </div>
+                                    </div>
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="corrente-excitacao-1-2" class="form-label">Corrente de Excitação 1.2pu (%):</label>
+                                        </div>                                        <div class="col-3">
+                                            <input type="number" class="form-control form-control-losses" id="corrente-excitacao-1-2" placeholder="Corrente 1.2pu">
+                                        </div>
+                                    </div>
+                                    <div class="mt-auto pb-2">
+                                        <div class="row g-1">
+                                            <div class="col-8 offset-2">
+                                                <button type="button" class="btn btn-info w-100" id="calcular-perdas-vazio">Calcular</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 px-1">
+                            <div class="card h-100 d-flex flex-column">
+                                <div class="card-header">
+                                    <h6 class="text-center m-0 card-header-title">PARÂMETROS GERAIS E DE MATERIAL</h6>
+                                </div>
+                                <div class="card-body d-flex align-items-center justify-content-center flex-grow-1" id="parametros-gerais-card-body">
+                                    <div class="text-muted text-center">Aguardando cálculo...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 ps-1">
+                            <div class="card h-100 d-flex flex-column">
+                                <div class="card-header">
+                                    <h6 class="text-center m-0 card-header-title">RESULTADOS POR NÍVEL DE TENSÃO (DUT)</h6>
+                                </div>
+                                <div class="card-body d-flex align-items-center justify-content-center flex-grow-1" id="dut-voltage-level-results-body">
+                                    <div class="text-muted text-center">Aguardando cálculo...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2"> <!-- REMOVIDO flex-grow-0 para comportamento natural -->
+                        <div class="col-md-12">
+                            <div class="card">                                <div class="card-header">
+                                    <h6 class="text-center m-0 card-header-title">ANÁLISE TAPS SUT / CORRENTE EPS</h6>
+                                </div>
+                                <div class="card-body d-flex align-items-center justify-content-center" id="sut-analysis-results-area">
+                                    <div class="text-muted text-center">Aguardando cálculo...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2"> <!-- REMOVIDO flex-grow-0 para comportamento natural -->
+                        <div class="col-md-12">
+                            <div id="legend-observations-area"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Perdas em Carga -->
+                <div class="tab-pane fade d-flex flex-column" id="perdas-carga-content" role="tabpanel" aria-labelledby="perdas-carga-tab"> <!-- MODIFICADO -->
+                    <div class="row g-2 mb-2 align-items-stretch flex-grow-1"> <!-- Mantido flex-grow-1 para absorver espaço -->
+                        <div class="col-md-5 pe-1">
+                            <div class="card h-100 d-flex flex-column">                                <div class="card-header">
+                                    <h6 class="text-center m-0 card-header-title">PARÂMETROS DE PERDAS EM CARGA</h6>
+                                </div>
+                                <div class="card-body p-3 flex-grow-1 d-flex flex-column">
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="temperatura-referencia" class="form-label">Temperatura de Referência (°C):</label>
+                                        </div>                                        <div class="col-3">
+                                            <select class="form-select form-select-losses dark-dropdown" id="temperatura-referencia">
+                                                <option value="75" selected>75°C</option>
+                                                <option value="85">85°C</option>
+                                                <option value="115">115°C</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="perdas-carga-kw_U_min" class="form-label">Perdas Totais Tap- (kW):</label>
+                                        </div>                                        <div class="col-3">
+                                            <input type="number" class="form-control form-control-losses" id="perdas-carga-kw_U_min" placeholder="Perdas Tap-">
+                                        </div>
+                                    </div>
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="perdas-carga-kw_U_nom" class="form-label">Perdas Totais Tap Nominal (kW):</label>
+                                        </div>                                        <div class="col-3">
+                                            <input type="number" class="form-control form-control-losses" id="perdas-carga-kw_U_nom" placeholder="Perdas Tap Nom">
+                                        </div>
+                                    </div>
+                                    <div class="mb-1 row g-1">
+                                        <div class="col-9 text-end pe-1">
+                                            <label for="perdas-carga-kw_U_max" class="form-label">Perdas Totais Tap+ (kW):</label>
+                                        </div>                                        <div class="col-3">
+                                            <input type="number" class="form-control form-control-losses" id="perdas-carga-kw_U_max" placeholder="Perdas Tap+">
+                                        </div>
+                                    </div>
+                                    <div class="mt-auto pb-2">
+                                        <div class="row g-1">
+                                            <div class="col-8 offset-2">
+                                                <button type="button" class="btn btn-danger w-100" id="calcular-perdas-carga">Calcular</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7 ps-1">
+                            <div class="card h-100">                                <div class="card-header">
+                                    <h6 class="text-center m-0 card-header-title">CONDIÇÕES NOMINAIS (RESULTADOS)</h6>
+                                </div>
+                                <div class="card-body d-flex align-items-center justify-content-center flex-grow-1 card-body-min-height" id="condicoes-nominais-card-body">
+                                    <div class="text-muted text-center">Aguardando cálculo...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2"> <!-- REMOVIDO flex-grow-0 para comportamento natural -->
+                        <div class="col-md-12">
+                            <div id="resultados-perdas-carga"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="losses-calculation-results-area"></div>
+            <div id="losses-general-error-message-area"></div>
+        </div>
+    </div>
+</div>

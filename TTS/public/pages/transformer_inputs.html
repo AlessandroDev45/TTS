@@ -1,0 +1,427 @@
+<!-- public/pages/transformer_inputs.html -->
+<div class="container-fluid ps-2 pe-0"> <!-- MODIFICADO: Adicionado ps-2 pe-0 para alinhar com a sidebar -->
+    <!-- Div onde o painel de informações do transformador será injetado -->
+    <div id="transformer-info-transformer_inputs-page" class="mb-2"></div>
+    
+    <!-- Título principal do módulo -->
+    <div class="card">
+        <div class="card-header d-flex align-items-center">
+            <h6 class="text-center m-0 flex-grow-1 card-header-title">ENTRADA DE DADOS DO TRANSFORMADOR</h6>
+            <button type="button" class="btn btn-sm btn-outline-light ms-2" title="Ajuda sobre Dados Básicos do Transformador">
+                <i class="fas fa-question-circle"></i>
+            </button>
+        </div>
+        <div class="card-body">
+<form id="transformer-inputs-form-container">
+    <!-- --- Especificações Gerais e Pesos --- -->
+    <div class="card mb-4"> <!-- dbc.Card --><div class="card-header text-center bg-primary-custom"> <!-- dbc.CardHeader -->
+            <h6 class="card-header-title m-0">ESPECIFICAÇÕES GERAIS E PESOS</h6> <!-- html.H5 -->
+            <!-- O help button será adicionado via JS ou se necessário, replicar a estrutura aqui -->
+            <!-- <button class="btn btn-secondary btn-sm float-end" title="Ajuda sobre Dados Básicos do Transformador">?</button> -->
+        </div>
+        <div class="card-body"> <!-- dbc.CardBody -->
+            <!-- LINHA 1: Potência, Frequência, Tipo Trafo, Grupo Ligação, Líq. Isolante, Tipo Isolamento, Norma -->
+            <div class="row g-2 mb-3"> <!-- dbc.Row className="g-2 mb-3" -->
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="potencia_mva" class="form-label">Potência (MVA):</label> <!-- dbc.Label -->
+                    <input type="number" class="form-control w-100" id="potencia_mva" placeholder="MVA" step="0.1" max="9999.9"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="frequencia" class="form-label">Frequência (Hz):</label> <!-- dbc.Label -->
+                    <input type="number" class="form-control w-100" id="frequencia" placeholder="Hz" value="60"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="tipo_transformador" class="form-label">Tipo Trafo:</label> <!-- dbc.Label -->
+                    <select class="form-select w-100" id="tipo_transformador"> <!-- dcc.Dropdown -->
+                        <option value="Trifásico">Trifásico</option>
+                        <option value="Monofásico">Monofásico</option>
+                    </select>
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="grupo_ligacao" class="form-label">Grupo Ligação:</label> <!-- dbc.Label -->
+                    <input type="text" class="form-control w-100" id="grupo_ligacao" placeholder="Ex: Dyn1"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="liquido_isolante" class="form-label">Líq. Isolante:</label> <!-- dbc.Label -->
+                    <input type="text" class="form-control w-100" id="liquido_isolante" value="Mineral"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="tipo_isolamento" class="form-label">Tipo Isolamento:</label> <!-- dbc.Label -->
+                    <select class="form-select w-100" id="tipo_isolamento"> <!-- dcc.Dropdown -->
+                        <option value="Uniforme">Uniforme</option>
+                        <option value="Progressivo">Progressivo</option>
+                    </select>
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="norma_iso" class="form-label">Norma:</label> <!-- dbc.Label -->
+                    <select class="form-select w-100" id="norma_iso"> <!-- dcc.Dropdown -->
+                        <option value="IEC">IEC NBR 5356</option>
+                        <option value="IEEE">IEEE C57.12</option>
+                    </select>
+                </div>
+            </div>
+            <!-- LINHA 2: Elev. Óleo, Elev. Enrol., Peso P.Ativa, Peso Tanque, Peso Óleo, Peso Total, LIMPAR -->
+            <div class="row g-2"> <!-- dbc.Row className="g-2" -->
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="elevacao_oleo_topo" class="form-label">Elev. Óleo (°C/K):</label> <!-- dbc.Label -->
+                    <input type="number" class="form-control w-100" id="elevacao_oleo_topo" step="1" max="999"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="elevacao_enrol" class="form-label">Elev. Enrol. (°C):</label> <!-- dbc.Label -->
+                    <input type="number" class="form-control w-100" id="elevacao_enrol" step="1" max="999"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="peso_parte_ativa" class="form-label">Peso P.Ativa (ton):</label> <!-- dbc.Label -->
+                    <input type="number" class="form-control w-100" id="peso_parte_ativa" step="0.1" max="999.9"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="peso_tanque_acessorios" class="form-label">Peso Tanque (ton):</label> <!-- dbc.Label -->
+                    <input type="number" class="form-control w-100" id="peso_tanque_acessorios" step="0.1" max="999.9"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="peso_oleo" class="form-label">Peso Óleo (ton):</label> <!-- dbc.Label -->
+                    <input type="number" class="form-control w-100" id="peso_oleo" step="0.1" max="999.9"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label for="peso_total" class="form-label">Peso Total (ton):</label> <!-- dbc.Label -->
+                    <input type="number" class="form-control w-100" id="peso_total" step="0.1" max="999.9"> <!-- dbc.Input -->
+                </div>
+                <div class="col"> <!-- dbc.Col -->
+                    <label class="form-label">&nbsp;</label> <!-- Espaço para alinhar -->
+                    <button type="button" class="btn btn-secondary w-100" id="limpar-transformer-inputs">LIMPAR</button> <!-- dbc.Button -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- Parâmetros dos Enrolamentos --- -->
+    <div class="card mb-4"> <!-- dbc.Card -->        <div class="card-header text-center bg-primary-custom"> <!-- dbc.CardHeader -->
+            <h6 class="card-header-title m-0">PARÂMETROS DOS ENROLAMENTOS E NÍVEIS DE ISOLAMENTO</h6> <!-- html.H5 -->
+            <!-- O help button será adicionado via JS ou se necessário, replicar a estrutura aqui -->
+            <!-- <button class="btn btn-secondary btn-sm float-end" title="Ajuda sobre Parâmetros dos Enrolamentos">?</button> -->
+        </div>
+        <div class="card-body"> <!-- dbc.CardBody -->
+            <div class="row g-0"> <!-- dbc.Row className="g-0" -->
+                <!-- --- Coluna Alta Tensão --- -->
+                <div class="col-md-4 pe-1 border-right-main"> <!-- dbc.Col md=4, className="pe-1" -->
+                    <div class="section-subtitle text-center">ALTA TENSÃO (AT)</div> <!-- html.Div style=SECTION_TITLE_STYLE -->
+                    <!-- Tensão e Classe lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="tensao_at" class="form-label">Tensão (kV):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="tensao_at" step="0.1"> <!-- dbc.Input -->
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="classe_tensao_at" class="form-label">Classe (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="classe_tensao_at"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS from tabela.json -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Corrente e Impedância lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="corrente_nominal_at" class="form-label">Corrente (A):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100 input-readonly" id="corrente_nominal_at" disabled readonly> <!-- dbc.Input disabled=True, style=READ_ONLY_STYLE -->
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="impedancia" class="form-label">Z (%):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="impedancia" step="0.01" max="99.99"> <!-- dbc.Input -->
+                        </div>
+                    </div>
+                    <!-- NBI e SIL lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="nbi_at" class="form-label">NBI/BIL (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="nbi_at"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="col-6" id="sil_at_col"> <!-- dbc.Col width=6, id="sil_at_col" -->
+                            <label for="sil_at" class="form-label">SIL/IM (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="sil_at"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>                        </div>
+                    </div>
+                    <hr class="hr-strong"> <!-- html.Hr -->
+                    <!-- Conexão e Classe Neutro lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6" id="conexao_at_col"> <!-- dbc.Col width=6, id="conexao_at_col" -->
+                            <label for="conexao_at" class="form-label">Conexão:</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="conexao_at"> <!-- dcc.Dropdown -->
+                                <option value="estrela">Yn</option>
+                                <option value="estrela_sem_neutro">Y</option>
+                                <option value="triangulo">D</option>
+                                <option value="ziguezague">Zn</option>
+                                <option value="ziguezague_sem_neutro">Z</option>
+                            </select>
+                        </div>
+                        <div class="col-6" id="tensao_bucha_neutro_at_col"> <!-- dbc.Col width=6, id="tensao_bucha_neutro_at_col" -->
+                            <label for="tensao_bucha_neutro_at" class="form-label">Classe Neutro (kV):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="tensao_bucha_neutro_at" step="0.1" max="999.9"> <!-- dbc.Input -->
+                        </div>
+                    </div>
+                    <!-- NBI/BIL Neutro e SIL/IM Neutro lado a lado -->
+                    <div class="row g-3 mb-3" id="at_neutral_fields_row"> <!-- dbc.Row className="g-3 mb-3", id="at_neutral_fields_row" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="nbi_neutro_at" class="form-label">NBI/BIL Neutro (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="nbi_neutro_at"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="sil_neutro_at" class="form-label">SIL/IM Neutro (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="sil_neutro_at"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>                    </div>
+                    <hr class="hr-strong"> <!-- html.Hr -->
+                    <div class="mb-3 mt-3 text-center bg-secondary text-white p-1 rounded">TAPS AT</div> <!-- html.Div style=SUBSECTION_TITLE_STYLE -->
+                    <!-- Tensões Tap+ e Tap- lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="tensao_at_tap_maior" class="form-label">Tap+ kV:</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="tensao_at_tap_maior" step="0.1" max="9999.9"> <!-- dbc.Input -->
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="tensao_at_tap_menor" class="form-label">Tap- kV:</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="tensao_at_tap_menor" step="0.1" max="9999.9"> <!-- dbc.Input -->
+                        </div>
+                    </div>
+                    <!-- Correntes Tap+ e Tap- lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="corrente_nominal_at_tap_maior" class="form-label">Tap+ A:</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100 input-readonly" id="corrente_nominal_at_tap_maior" disabled readonly> <!-- dbc.Input disabled=True, style=READ_ONLY_STYLE -->
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="corrente_nominal_at_tap_menor" class="form-label">Tap- A:</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100 input-readonly" id="corrente_nominal_at_tap_menor" disabled readonly> <!-- dbc.Input disabled=True, style=READ_ONLY_STYLE -->
+                        </div>
+                    </div>
+                    <!-- Impedâncias Tap+ e Tap- lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="impedancia_tap_maior" class="form-label">Tap+ Z%:</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="impedancia_tap_maior" step="0.01" max="99.99"> <!-- dbc.Input -->
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="impedancia_tap_menor" class="form-label">Tap- Z%:</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="impedancia_tap_menor" step="0.01" max="99.99"> <!-- dbc.Input -->
+                        </div>                    </div>
+                    <hr class="hr-strong"> <!-- html.Hr -->
+                    <div class="mb-3 mt-3 text-center bg-secondary text-white p-1 rounded">TENSÕES ENSAIO AT</div> <!-- html.Div style=SUBSECTION_TITLE_STYLE -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="teste_tensao_aplicada_at" class="form-label">Aplicada (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="teste_tensao_aplicada_at"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="teste_tensao_induzida_at" class="form-label">Induzida (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="teste_tensao_induzida_at"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- --- Coluna Baixa Tensão --- -->
+                <div class="col-md-4 px-1 border-right-main"> <!-- dbc.Col md=4, className="px-1" -->
+                    <div class="section-subtitle text-center">BAIXA TENSÃO (BT)</div> <!-- html.Div style=SECTION_TITLE_STYLE -->
+                    <!-- Tensão e Classe lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="tensao_bt" class="form-label">Tensão (kV):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="tensao_bt" step="0.1"> <!-- dbc.Input -->
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="classe_tensao_bt" class="form-label">Classe (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="classe_tensao_bt"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS from tabela.json -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Corrente -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="corrente_nominal_bt" class="form-label">Corrente (A):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100 input-readonly" id="corrente_nominal_bt" disabled readonly> <!-- dbc.Input disabled=True, style=READ_ONLY_STYLE -->
+                        </div>
+                    </div>
+                    <!-- NBI e SIL lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="nbi_bt" class="form-label">NBI/BIL (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="nbi_bt"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                            <!-- Elemento dummy para callback clientside -->
+                            <div id="_bt_dummy_output" class="dummy-output"></div>
+                        </div>
+                        <div class="col-6" id="sil_bt_col"> <!-- dbc.Col width=6, id="sil_bt_col" -->
+                            <label for="sil_bt" class="form-label">SIL/IM (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="sil_bt"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>                    </div>
+                    <hr class="hr-strong"> <!-- html.Hr -->
+                    <!-- Conexão e Classe Neutro lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6" id="conexao_bt_col"> <!-- dbc.Col width=6, id="conexao_bt_col" -->
+                            <label for="conexao_bt" class="form-label">Conexão:</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="conexao_bt"> <!-- dcc.Dropdown -->
+                                <option value="estrela">Yn</option>
+                                <option value="estrela_sem_neutro">Y</option>
+                                <option value="triangulo">D</option>
+                                <option value="ziguezague">Zn</option>
+                                <option value="ziguezague_sem_neutro">Z</option>
+                            </select>
+                        </div>
+                        <div class="col-6" id="tensao_bucha_neutro_bt_col"> <!-- dbc.Col width=6, id="tensao_bucha_neutro_bt_col" -->
+                            <label for="tensao_bucha_neutro_bt" class="form-label">Classe Neutro (kV):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="tensao_bucha_neutro_bt" step="0.1" max="999.9"> <!-- dbc.Input -->
+                        </div>
+                    </div>
+                    <!-- NBI/BIL Neutro e SIL/IM Neutro lado a lado -->
+                    <div class="row g-3 mb-3" id="bt_neutral_fields_row"> <!-- dbc.Row className="g-3 mb-3", id="bt_neutral_fields_row" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="nbi_neutro_bt" class="form-label">NBI/BIL Neutro (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="nbi_neutro_bt"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="sil_neutro_bt" class="form-label">SIL/IM Neutro (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="sil_neutro_bt"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>                    <hr class="hr-strong"> <!-- html.Hr -->
+                    <div class="mb-3 mt-3 text-center bg-secondary text-white p-1 rounded">TENSÕES ENSAIO BT</div> <!-- html.Div style=SUBSECTION_TITLE_STYLE -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="teste_tensao_aplicada_bt" class="form-label">Aplicada (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="teste_tensao_aplicada_bt"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- --- Coluna Terciário --- -->
+                <div class="col-md-4 ps-1"> <!-- dbc.Col md=4, className="ps-1" -->
+                    <div class="mb-3 text-center bg-secondary text-white p-1 rounded">TERCIÁRIO</div> <!-- html.Div style=SECTION_TITLE_STYLE -->
+                    <!-- Tensão e Classe lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="tensao_terciario" class="form-label">Tensão (kV):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="tensao_terciario" step="0.1"> <!-- dbc.Input -->
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="classe_tensao_terciario" class="form-label">Classe (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="classe_tensao_terciario"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS from tabela.json -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Corrente -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="corrente_nominal_terciario" class="form-label">Corrente (A):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100 input-readonly" id="corrente_nominal_terciario" disabled readonly> <!-- dbc.Input disabled=True, style=READ_ONLY_STYLE -->
+                        </div>
+                    </div>
+                    <!-- NBI e SIL lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="nbi_terciario" class="form-label">NBI/BIL (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="nbi_terciario"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                            <!-- Elemento dummy para callback clientside -->
+                            <div id="_terciario_dummy_output" class="dummy-output"></div>
+                        </div>
+                        <div class="col-6" id="sil_terciario_col"> <!-- dbc.Col width=6, id="sil_terciario_col" -->
+                            <label for="sil_terciario" class="form-label">SIL/IM (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="sil_terciario"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>                    </div>
+                    <hr class="transformer-hr"> <!-- html.Hr -->
+                    <!-- Conexão e Classe Neutro lado a lado -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6" id="conexao_terciario_col"> <!-- dbc.Col width=6, id="conexao_terciario_col" -->
+                            <label for="conexao_terciario" class="form-label">Conexão:</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="conexao_terciario"> <!-- dcc.Dropdown -->
+                                <option value=" "> (Nenhum)</option>
+                                <option value="estrela">Yn</option>
+                                <option value="estrela_sem_neutro">Y</option>
+                                <option value="triangulo">D</option>
+                                <option value="ziguezague">Zn</option>
+                                <option value="ziguezague_sem_neutro">Z</option>
+                            </select>
+                        </div>
+                        <div class="col-6" id="tensao_bucha_neutro_terciario_col"> <!-- dbc.Col width=6, id="tensao_bucha_neutro_terciario_col" -->
+                            <label for="tensao_bucha_neutro_terciario" class="form-label">Classe Neutro (kV):</label> <!-- dbc.Label -->
+                            <input type="number" class="form-control w-100" id="tensao_bucha_neutro_terciario" step="0.1" max="999.9"> <!-- dbc.Input -->
+                        </div>
+                    </div>
+                    <!-- NBI/BIL Neutro e SIL/IM Neutro lado a lado -->
+                    <div class="row g-3 mb-3" id="terciario_neutral_fields_row"> <!-- dbc.Row className="g-3 mb-3", id="terciario_neutral_fields_row" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="nbi_neutro_terciario" class="form-label">NBI/BIL Neutro (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="nbi_neutro_terciario"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="sil_neutro_terciario" class="form-label">SIL/IM Neutro (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="sil_neutro_terciario"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>                        </div>
+                    </div>
+                    <hr class="transformer-hr"> <!-- html.Hr -->
+                    <div class="mb-3 mt-3 text-center bg-secondary text-white p-1 rounded">TENSÕES ENSAIO TERCIÁRIO</div> <!-- html.Div style=SUBSECTION_TITLE_STYLE -->
+                    <div class="row g-3 mb-3"> <!-- dbc.Row className="g-3 mb-3" -->
+                        <div class="col-6"> <!-- dbc.Col width=6 -->
+                            <label for="teste_tensao_aplicada_terciario" class="form-label">Aplicada (kV):</label> <!-- dbc.Label -->
+                            <select class="form-select w-100" id="teste_tensao_aplicada_terciario"> <!-- dcc.Dropdown -->
+                                <!-- Options will be populated by JS -->
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="height-15px"></div> <!-- html.Div style={"height": "15px"} -->
+            <div class="row g-2 mb-2"> <!-- dbc.Row className="g-2 mb-2" -->
+                <div class="col-md-6 offset-md-3 text-center text-muted small" id="last-save-ok"> <!-- dbc.Col width={"size": 6, "offset": 3} -->
+                    <!-- Last save status will be updated by JS -->
+                </div>
+            </div>            <!-- dcc.Store and dcc.Interval are Dash components, not pure HTML. They will be handled by the Dash app. -->
+            <!-- <div id="dirty-flag" data-storage-type="memory"></div> -->
+            <!-- <div id="page-init-trigger" data-n-intervals="0" data-max-intervals="1"></div> -->
+        </div>
+    </div>
+</form>
+        </div>
+    </div>
+</div>

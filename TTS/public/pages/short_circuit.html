@@ -1,0 +1,143 @@
+<!-- public/pages/short_circuit.html -->
+<div class="container-fluid ps-2 pe-0"> <!-- MODIFICADO: Adicionado ps-2 pe-0 para alinhar com a sidebar -->
+    <!-- Div onde o painel de informações do transformador será injetado -->
+    <div id="transformer-info-short_circuit-page" class="mb-2"></div>
+    <!-- Divs ocultas para compatibilidade global -->
+
+    <!-- Título principal do módulo -->    <div class="card">        <div class="card-header d-flex align-items-center">
+            <h6 class="card-header-title text-center m-0 flex-grow-1">ANÁLISE DE CURTO-CIRCUITO</h6>
+            <button type="button" class="btn btn-sm btn-outline-light ms-2" title="Ajuda sobre Curto-Circuito">
+                <i class="fas fa-question-circle"></i>
+            </button>
+        </div>
+        <div class="card-body d-flex flex-column" id="short-circuit-form">
+            <!-- Layout principal com duas colunas -->
+            <div class="row g-2 flex-grow-1 d-flex align-items-stretch">
+                <!-- Coluna Esquerda: Dados de Entrada e Resultados -->
+                <div class="col-md-5 pe-1 d-flex flex-column">
+                    <!-- Card para Dados de Entrada -->                    <div class="card mb-3 flex-grow-1">
+                        <div class="card-header">
+                            <h6 class="card-header-title m-0">Dados de Entrada do Ensaio</h6>
+                        </div>
+                        <div class="card-body">                            <div class="alert alert-info alert-info-small">
+                                <p class="mb-0">Cálculos e verificações baseados na NBR 5356-5 / IEC 60076-5.</p>
+                            </div>
+                            <!-- Seção de Impedâncias -->
+                            <div class="section-subtitle">Impedâncias Medidas (%)</div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label for="impedance-before" class="form-label">Pré-Ensaio (Z_antes):</label>
+                                    <input type="number" class="form-control form-control-sm" id="impedance-before" placeholder="Z% antes" step="0.01">
+                                </div>
+                                <div class="col-6">
+                                    <label for="impedance-after" class="form-label">Pós-Ensaio (Z_depois):</label>
+                                    <input type="number" class="form-control form-control-sm" id="impedance-after" placeholder="Z% depois" step="0.01">
+                                </div>
+                            </div>                            <!-- Seção de Parâmetros Adicionais -->
+                            <div class="section-subtitle">Parâmetros Adicionais</div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label for="peak-factor" class="form-label">Fator Pico (k√2):</label>
+                                    <input type="number" class="form-control form-control-sm" id="peak-factor" placeholder="Ex: 2.55" value="2.55" step="0.01">
+                                </div>
+                                <div class="col-6">
+                                    <label for="isc-side" class="form-label">Lado Cálculo Isc:</label>
+                                    <select class="form-select form-select-sm dark-dropdown" id="isc-side">
+                                        <option value="AT" selected>AT</option>
+                                        <option value="BT">BT</option>
+                                        <option value="TERCIARIO">Terciário</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <label for="power-category" class="form-label">Categoria (Potência):</label>
+                                    <select class="form-select form-select-sm dark-dropdown" id="power-category">
+                                        <option value="" disabled selected>Selecione...</option>
+                                        <option value="I">Categoria I (Até 1600 kVA)</option>
+                                        <option value="II">Categoria II (Acima de 1600 kVA até 40 MVA)</option>
+                                        <option value="III">Categoria III (Acima de 40 MVA)</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 d-flex align-items-center">
+                                    <button class="btn btn-primary w-100 mt-1" id="calc-short-circuit-btn">Calcular / Verificar</button>
+                                </div>
+                            </div>
+                            <div id="short-circuit-error-message" class="mt-2 text-danger small"></div>
+                        </div>
+                    </div>
+
+                    <!-- Card para Resultados -->
+                    <div class="card flex-grow-1">                        <div class="card-header">
+                            <h6 class="card-header-title m-0">Resultados do Cálculo</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-6">
+                                            <label class="form-label">Isc Simétrica (kA):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" class="form-control form-control-sm readonly" id="isc-sym-result" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-6">
+                                            <label class="form-label">Ip Pico (kA):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" class="form-control form-control-sm readonly" id="isc-peak-result" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-6">
+                                            <label class="form-label">Variação ΔZ (%):</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" class="form-control form-control-sm readonly" id="delta-impedance-result" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2 align-items-center">
+                                        <div class="col-6">
+                                            <label class="form-label">Status Verificação:</label>
+                                        </div>
+                                        <div class="col-6">
+                                            <div id="impedance-check-status" class="status-display">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>                            <div class="alert alert-light-custom py-1 px-2 mt-1 mb-0">
+                                <p class="text-small mb-0">
+                                    <strong>Nota 1:</strong> Cálculos de Isc e ip são simplificados.<br>
+                                    <strong>Nota 2:</strong> Limites de ΔZ% conforme NBR 5356-5 Tabela 2.
+                                </p>
+                            </div>
+                            <div id="short-circuit-notes" class="hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita: Gráfico de Variação de Impedância (mais espaço) -->
+                <div class="col-md-7 ps-1 h-100">
+                    <div class="card h-100">                        <div class="card-header">
+                            <h6 class="card-header-title m-0">Variação da Impedância</h6>
+                        </div>
+                        <div class="card-body">                            <p class="text-small mb-05">
+                                O gráfico abaixo mostra a variação percentual da impedância (ΔZ) medida antes e após o ensaio,
+                                comparada com os limites estabelecidos pela norma NBR 5356-5 / IEC 60076-5 para a categoria selecionada.
+                            </p><div id="impedance-variation-graph" class="plotly-graph-placeholder">
+                                <span class="text-muted">Gráfico de Variação da Impedância (%)</span>
+                            </div>
+                            <div class="graph-legend">
+                                <span class="text-primary">■ </span> Variação Medida (ΔZ)
+                                <span class="legend-separator"> | </span>
+                                <span class="text-fail">■ </span> Limites Normativos
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

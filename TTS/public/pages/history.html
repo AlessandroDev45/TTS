@@ -1,0 +1,121 @@
+<!-- public/pages/history.html -->
+<div class="container-fluid ps-2 pe-0"> <!-- MODIFICADO: Adicionado ps-2 pe-0 para alinhar com a sidebar -->
+    <!-- Div onde o painel de informações do transformador será injetado -->
+    <div id="transformer-info-history-page" class="mb-2"></div>
+    <!-- Divs ocultas para compatibilidade global -->
+
+    <!-- Título da Página -->
+    <div class="row g-2 pt-2">
+        <div class="col-md-12">            <h4 class="page-title d-inline align-middle">
+                <i class="page-title-icon fas fa-history me-2"></i>
+                Histórico de Sessões
+            </h4>
+        </div>
+    </div>
+
+    <!-- Seção de Gerenciamento de Sessões (Salvar e Buscar) -->
+    <div class="card mb-3">        <div class="card-header">
+            <h6 class="card-header-title m-0">
+                <i class="fas fa-tasks me-2"></i> Gerenciar Sessões
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-7 col-lg-8 mb-2 mb-md-0">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="history-search-input" placeholder="Filtrar por nome ou notas...">
+                        <button type="button" class="btn btn-primary ms-2" id="history-search-button">Buscar</button>
+                    </div>
+                </div>
+                <div class="col-md-5 col-lg-4">
+                    <button type="button" class="btn btn-success w-100" id="history-open-save-modal-button">
+                        <i class="fas fa-save me-2"></i> Salvar Sessão Atual
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>    <!-- Estatísticas -->
+    <div class="history-stats-card">
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <div class="col-md-4 history-stats-item">
+                    <i class="history-stats-icon fas fa-database"></i>
+                    <div>
+                        <h5 id="history-stats-total-sessions" class="history-stats-number">--</h5>
+                        <p class="history-stats-label">Sessões Salvas</p>
+                    </div>
+                </div>
+                <!-- Adicione mais estatísticas se desejar aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Sessões Armazenadas -->
+    <div class="card">        <div class="card-header">
+            <h6 class="card-header-title m-0">
+                <i class="fas fa-list-alt me-2"></i> Sessões Armazenadas
+            </h6>
+        </div>
+        <div class="card-body">            <div id="history-loading-table">
+                <div class="table-header-sticky row g-0">
+                    <div class="col-3 table-header-cell">Data/Hora</div>
+                    <div class="col-4 table-header-cell">Nome da Sessão</div>
+                    <div class="col-3 table-header-cell">Notas</div>
+                    <div class="col-2 table-header-cell">Ações</div>
+                </div>
+                <div id="history-table-body-content" class="table-body-scrollable">
+                    <!-- Conteúdo da tabela preenchido por JavaScript -->
+                    <div class="text-muted text-center py-5">Nenhuma sessão encontrada.</div>
+                </div>
+            </div>
+            <div id="history-action-message" class="history-action-message mt-3"></div>
+        </div>
+    </div>
+
+    <!-- Modal para Salvar Sessão -->
+    <div class="modal fade" id="history-save-session-modal" tabindex="-1" aria-labelledby="historySaveSessionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">            <div class="modal-content modal-content-custom">
+                <div class="modal-header modal-header-custom">
+                    <h5 class="modal-title" id="historySaveSessionModalLabel">Salvar Sessão Atual</h5>
+                    <button type="button" class="btn-close btn-close-inverted" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="history-session-name-input" class="form-label">Nome da Sessão:</label>
+                    <input type="text" class="form-control mb-3" id="history-session-name-input" placeholder="Identificador único">
+                    <label for="history-session-notes-input" class="form-label">Notas (Opcional):</label>
+                    <textarea class="form-control textarea-large" id="history-session-notes-input" placeholder="Detalhes..."></textarea>
+                    <div id="history-save-modal-error" class="text-danger small mt-2"></div>
+                </div>
+                <div class="modal-footer modal-footer-custom">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="history-save-modal-cancel-button">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="history-save-modal-confirm-button">
+                        <i class="fas fa-save me-1"></i> Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Confirmar Exclusão -->
+    <div class="modal fade" id="history-delete-session-modal" tabindex="-1" aria-labelledby="historyDeleteSessionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">            <div class="modal-content modal-content-custom">
+                <div class="modal-header modal-header-custom">
+                    <h5 class="modal-title" id="historyDeleteSessionModalLabel">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close btn-close-inverted" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir esta sessão?</p>
+                    <p class="fw-bold text-danger">Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer modal-footer-custom">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="history-delete-modal-cancel-button">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="history-delete-modal-confirm-button">
+                        <i class="fas fa-trash-alt me-1"></i> Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
