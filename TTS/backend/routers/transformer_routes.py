@@ -26,7 +26,13 @@ except ImportError:
     except ImportError:
         from mcp import MCPDataManager
         from services import transformer_service
-
+        from ..services import losses_service
+        from ..services import impulse_service
+        from ..services import applied_voltage_service
+        from ..services import induced_voltage_service
+        from ..services import short_circuit_service
+        from ..services import temperature_service
+        from ..services import dielectric_service
 # Placeholder para a instância do MCP (será definida por main.py)
 mcp_data_manager = None
 
@@ -134,8 +140,25 @@ async def process_module_data(module_id: str, data: Dict[str, Any] = Body(...)):
         basic_data = data.get('basicData', {})
         module_data = data.get('moduleData', {})
 
-        # Chama service específico (implementação será feita nos services existentes)
-        processed_data = {"message": f"Módulo {module_id} processado", "inputs": module_data}
+        # Chama service específico com base no module_id
+        processed_data = {}
+        if module_id == 'losses':
+            processed_data = losses_service.calculate_losses(basic_data, module_data)
+        elif module_id == 'impulse':
+            processed_data = impulse_service.calculate_impulse(basic_data, module_data)
+        elif module_id == 'appliedVoltage':
+            processed_data = applied_voltage_service.calculate_applied_voltage(basic_data, module_data)
+        elif module_id == 'inducedVoltage':
+            processed_data = induced_voltage_service.calculate_induced_voltage(basic_data, module_data)
+        elif module_id == 'shortCircuit':
+            processed_data = short_circuit_service.calculate_short_circuit(basic_data, module_data)
+        elif module_id == 'temperatureRise':
+            processed_data = temperature_service.calculate_temperature_rise(basic_data, module_data)
+        elif module_id == 'dielectricAnalysis':
+            processed_data = dielectric_service.analyze_dielectric(basic_data, module_data)
+        else:
+            # Isso não deve acontecer devido à validação de valid_modules, mas é um fallback
+            raise HTTPException(status_code=500, detail=f"Serviço para o módulo '{module_id}' não implementado.")
 
         # Armazena no MCP
         if mcp_data_manager is None:

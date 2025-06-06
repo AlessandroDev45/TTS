@@ -19,61 +19,31 @@ if str(root_dir) not in sys.path:
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-# Tenta importar constantes e funções de outros serviços
+# Importa constantes e funções de outros serviços usando importação relativa
 try:
-    # Tenta importação relativa (quando importado como submódulo)
     from ..utils import constants as const
     from .short_circuit_service import calculate_nominal_currents # Importar do serviço de curto-circuito
-except ImportError:
-    try:
-        # Tenta importação absoluta (quando executado diretamente)
-        from backend.utils import constants as const
-        from backend.services.short_circuit_service import calculate_nominal_currents # Importar do serviço de curto-circuito
-    except ImportError:
-        try:
-            # Tenta importação local (quando executado de backend/)
-            from utils import constants as const
-            from services.short_circuit_service import calculate_nominal_currents # Importar do serviço de curto-circuito
-        except ImportError:
-            logging.warning("Não foi possível importar 'constants' ou 'calculate_nominal_currents'. Usando valores mock.")
+except ImportError as e:
+    logging.error(f"Erro ao importar módulos dependentes em transformer_service: {e}")
+    # Em caso de falha crítica na importação, re-raise o erro ou defina mocks que falhem explicitamente
+    # Para fins de depuração, vamos definir mocks que loggam o uso e retornam None/valores padrão
+    class MockConstants:
+        IAC_NBI_FACTOR = 3.5
+        EPSILON = 1e-6
+        SQRT_3 = 1.732050807568877
+        PI = 3.141592653589793
 
-            # Define constantes mock que podem ser necessárias
-            class MockConstants:
-                IAC_NBI_FACTOR = 3.5  # Valor padrão para o fator IAC NBI
-                EPSILON = 1e-6        # Tolerância para comparações
-                SQRT_3 = 1.732050807568877
-                PI = 3.141592653589793
+    const = MockConstants()
 
-            const = MockConstants()
-
-            # Mock para calculate_nominal_currents se não puder ser importado
-            def calculate_nominal_currents(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
-                logging.warning("Usando mock para calculate_nominal_currents.")
-                # Retorna um dicionário mock com valores None para satisfazer a anotação de tipo
-                return {
-                    "corrente_nominal_at": None,
-                    "corrente_nominal_bt": None,
-                    "corrente_nominal_terciario": None,
-                    "corrente_nominal_at_tap_maior": None,
-                    "corrente_nominal_at_tap_menor": None,
-                }
-
-                corrente_at = (potencia_mva * 1000) / (tensao_at * sqrt_3_factor) if potencia_mva is not None and tensao_at is not None and tensao_at > 0 else None
-                corrente_bt = (potencia_mva * 1000) / (tensao_bt * sqrt_3_factor) if potencia_mva is not None and tensao_bt is not None and tensao_bt > 0 else None
-                corrente_terciario = (potencia_mva * 1000) / (tensao_terciario * sqrt_3_factor) if potencia_mva is not None and tensao_terciario is not None and tensao_terciario > 0 else None
-
-                # Cálculos para taps (Seção 2.2)
-                corrente_at_tap_maior = (potencia_mva * 1000) / (tensao_at_tap_maior * sqrt_3_factor) if potencia_mva is not None and tensao_at_tap_maior is not None and tensao_at_tap_maior > 0 else None
-                corrente_at_tap_menor = (potencia_mva * 1000) / (tensao_at_tap_menor * sqrt_3_factor) if potencia_mva is not None and tensao_at_tap_menor is not None and tensao_at_tap_menor > 0 else None
-
-
-                return {
-                    "i_nom_at": corrente_at,
-                    "i_nom_bt": corrente_bt,
-                    "i_nom_ter": corrente_terciario,
-                    "i_nom_at_tap_maior": corrente_at_tap_maior,
-                    "i_nom_at_tap_menor": corrente_at_tap_menor
-                }
+    def calculate_nominal_currents(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
+        logging.warning("Usando mock para calculate_nominal_currents devido a falha na importação.")
+        return {
+            "i_nom_at": None,
+            "i_nom_bt": None,
+            "i_nom_ter": None,
+            "i_nom_at_tap_maior": None,
+            "i_nom_at_tap_menor": None,
+        }
 
 # Definir extract_and_process_transformer_inputs no escopo principal
 def extract_and_process_transformer_inputs(raw_inputs: Dict[str, Any]) -> Dict[str, Any]:
@@ -168,6 +138,9 @@ def calculate_and_process_transformer_data(
     # 1. Processar e limpar os inputs brutos
     data_to_process = extract_and_process_transformer_inputs(transformer_inputs)
 
+    # LOG: Exibir dados antes do cálculo das correntes
+    log.info(f"[DEBUG] Dados para cálculo das correntes: {data_to_process}")
+
     # 2. Calcular correntes nominais (Seção 2.1 e 2.2)
     currents_input_data = {
         "tipo_transformador": data_to_process.get("tipo_transformador"),
@@ -178,8 +151,10 @@ def calculate_and_process_transformer_data(
         "tensao_bt": data_to_process.get("tensao_bt"),
         "tensao_terciario": data_to_process.get("tensao_terciario"),
     }
+    log.info(f"[DEBUG] Dados enviados para calculate_nominal_currents: {currents_input_data}")
     # Usar a função calculate_nominal_currents importada
     calculated_currents = calculate_nominal_currents(currents_input_data)
+    log.info(f"[DEBUG] Resultado de calculate_nominal_currents: {calculated_currents}")
 
     data_to_process["corrente_nominal_at"] = calculated_currents.get("i_nom_at") # Usar chaves corretas do retorno
     data_to_process["corrente_nominal_bt"] = calculated_currents.get("i_nom_bt") # Usar chaves corretas do retorno
