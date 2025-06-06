@@ -61,14 +61,22 @@ const transformerDataStore = {
 // Funções para preencher o transformer_info_panel
 async function loadAndPopulateTransformerInfo(targetElementId) {
     console.log(`[common_module] loadAndPopulateTransformerInfo: Iniciando para ${targetElementId}`);
+
+    // Se o targetElementId for da página de transformer_inputs, não carregue o painel.
+    // O painel de informações do transformador não deve ser exibido nesta página.
+    if (targetElementId === 'transformer-info-transformer_inputs-page') {
+        const targetElement = document.getElementById(targetElementId);
+        if (targetElement) {
+            targetElement.innerHTML = ''; // Garante que o elemento esteja vazio
+            targetElement.classList.add('d-none'); // Oculta o elemento se ele existir
+        }
+        console.log(`[common_module] loadAndPopulateTransformerInfo: Painel de informações do transformador oculto para ${targetElementId}`);
+        return;
+    }
+
     const targetElement = document.getElementById(targetElementId);
     if (!targetElement) {
-        // Não mostra erro para transformer_inputs pois é esperado não ter o painel
-        if (targetElementId.includes('transformer_inputs')) {
-            console.log(`[common_module] loadAndPopulateTransformerInfo: Painel não necessário para ${targetElementId}`);
-        } else {
-            console.error(`[common_module] loadAndPopulateTransformerInfo: Elemento alvo para info do transformador não encontrado: ${targetElementId}`);
-        }
+        console.error(`[common_module] loadAndPopulateTransformerInfo: Elemento alvo para info do transformador não encontrado: ${targetElementId}`);
         console.log(`[common_module] loadAndPopulateTransformerInfo: Concluído (elemento não encontrado)`);
         return;
     }

@@ -214,6 +214,16 @@ async function initTransformerInputs() {
     });
 }
 
+// Garante que o painel de informações do transformador nunca seja exibido nesta página
+window.addEventListener('DOMContentLoaded', () => {
+    const infoPanel = document.getElementById('transformer-info-transformer_inputs-page');
+    if (infoPanel) {
+        infoPanel.innerHTML = '';
+        infoPanel.classList.add('d-none');
+        infoPanel.style.display = 'none';
+    }
+});
+
 // SPA routing: executa quando o módulo transformer_inputs é carregado
 document.addEventListener('moduleContentLoaded', (event) => {
     if (event.detail && event.detail.moduleName === 'transformer_inputs') {

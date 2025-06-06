@@ -66,6 +66,12 @@ html, body {
     overflow-x: hidden;
 }
 
+.container-full-height {
+    min-height: calc(100vh - 56px); /* Assumindo 56px para a altura da navbar */
+    display: flex;
+    flex-direction: column;
+}
+
 .row {
     margin-left: 0;
     margin-right: 0;
@@ -838,12 +844,13 @@ small.text-muted {
     flex-direction: column; /* Organiza o conteúdo da aba em coluna */
 }
 
-.losses-tab-content-custom > .tab-pane > .row {
-    /* Garante que as rows dentro das abas gerenciem o espaço vertical */
-    /* A primeira row já tem flex-grow-1, mas garantir que as outras não causem problemas */
-    /* Se necessário, podemos adicionar flex-grow-1 a outras rows ou ajustar o layout interno */
-    flex-grow: 1;
-}
+/* Ajustes para o card de Perdas */
+.losses-card {
+    background-color: var(--background-card);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Sombra mais sutil */
+    border-radius: 8px; /* Arredondamento mais suave */
+}   
 
 /* Utility class for card body minimum height in losses.html */
 .card-body-min-height { min-height: 200px; }
