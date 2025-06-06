@@ -306,20 +306,20 @@ def analyze_dielectric_strength(data: Dict[str, Any]) -> Dict[str, Any]:
     return results
 
 
-def analyze_dielectric(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, Any]:
+def analyze_dielectric(basic_data: Dict[str, Any], module_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Função principal de análise dielétrica para interface com o roteador.
     
     Args:
         basic_data: Dados básicos do transformador
-        module_inputs: Dados específicos do módulo de análise dielétrica
+        module_data: Dados específicos do módulo de análise dielétrica
     
     Returns:
         Dicionário com os resultados da análise dielétrica
     """
     try:
         # Combina dados básicos e específicos do módulo
-        combined_data = {**basic_data, **module_inputs}
+        combined_data = {**basic_data, **module_data}
         
         # Chama a função de análise principal
         results = analyze_dielectric_strength(combined_data)
@@ -334,7 +334,7 @@ def analyze_dielectric(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]
                     'tensao_suportabilidade_impulso': f"{combined_data.get('nbi_at', 0)} kV",
                     'status': 'APROVADO' if results.get('analise_niveis_isolamento', {}).get('at_bil', {}).get('status') == 'APROVADO' else 'PENDENTE'
                 },
-            'bt': {
+                'bt': {
                     'nivel_isolamento': f"{results.get('bt_bil_distancia_minima', 0):.2f} mm",
                     'tensao_ensaio_frequencia_industrial': f"{combined_data.get('teste_tensao_aplicada_bt', 0)} kV",
                     'tensao_suportabilidade_impulso': f"{combined_data.get('nbi_bt', 0)} kV",

@@ -1,230 +1,297 @@
-// public/scripts/transformer_inputs.js - Simplificado
-// Importações do módulo comum
-
 import { loadAndPopulateTransformerInfo } from './common_module.js';
-import { initializeIsolationDropdowns, populateIsolationDropdowns, toggleNeutralFieldsVisibility } from './insulation_levels.js';
-import { collectFormData } from './api_persistence.js';
+import { initializeIsolationDropdowns, toggleNeutralFieldsVisibility } from './insulation_levels.js';
+// Não precisamos mais importar collectFormData e fillFormWithData daqui,
+// pois api_persistence.js já os expõe globalmente e setupFormPersistence os usa.
 
-// public/scripts/transformer_inputs.js - Simplificado
+// --- FUNÇÕES HELPER PARA INPUTS ---
+function getNumericValueOrNull(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        const val = el.value.trim();
+        if (val === "") return null;
+        const num = parseFloat(val.replace(',', '.'));
+        return isNaN(num) ? null : num;
+    }
+    return null;
+}
+
+function getStringValueOrNull(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        const val = el.value.trim();
+        return val === "" ? null : val;
+    }
+    return null;
+}
+// --- FIM DAS FUNÇÕES HELPER ---
 
 // Função para configurar persistência (usando sistema global)
 async function setupFormPersistence(formId, storeId) {
     try {
-        console.log(`[setupFormPersistence] Iniciando configuração para ${formId} → ${storeId}`);
-        // Usa a função globalmente exposta
+        console.log(`[transformer_inputs.js - setupFormPersistence] Iniciando para ${formId} -> ${storeId}`);
         await window.waitForApiSystem();
-
-        // Verificar se o formulário existe
         const formElement = document.getElementById(formId);
         if (!formElement) {
-            console.error(`[setupFormPersistence] ERRO: Formulário ${formId} não encontrado!`);
+            console.error(`[transformer_inputs.js - setupFormPersistence] ERRO: Formulário ${formId} não encontrado!`);
             return;
         }
-        console.log(`[setupFormPersistence] Formulário ${formId} encontrado`);
-
-        // Usa a função globalmente exposta
         if (window.setupApiFormPersistence) {
-            console.log('[setupFormPersistence] Usando função global setupApiFormPersistence');
             await window.setupApiFormPersistence(formId, storeId);
+            console.log(`[transformer_inputs.js - setupFormPersistence] Persistência configurada por api_persistence.js para ${formId}`);
         } else {
-            console.error('[setupFormPersistence] ERRO: Função global setupApiFormPersistence não encontrada!');
-            // Não há fallback local, pois a função global é a fonte de verdade
+            console.error('[transformer_inputs.js - setupFormPersistence] ERRO: window.setupApiFormPersistence não encontrada!');
         }
-        console.log(`[setupFormPersistence] Configuração concluída para ${formId}`);
-
-    // Teste adicional - verificar se listeners estão funcionando
-    setTimeout(() => {
-        const formElement = document.getElementById(formId);
-        if (formElement) {
-            const inputs = formElement.querySelectorAll('input, select, textarea');
-            console.log(`[setupFormPersistence] VERIFICAÇÃO: ${inputs.length} inputs encontrados no formulário`);
-
-            // Testa o primeiro input
-            if (inputs.length > 0) {
-                const firstInput = inputs[0];
-                console.log(`[setupFormPersistence] TESTE: Primeiro input é ${firstInput.id || firstInput.name} (${firstInput.type})`);
-            }
-        }
-    }, 1000);
     } catch (error) {
-        console.error('[setupFormPersistence] Erro:', error);
+        console.error('[transformer_inputs.js - setupFormPersistence] Erro:', error);
     }
 }
 
-// Função para preencher os campos de corrente nominal a partir do backend
+// Função para enviar os dados básicos do transformador para o backend para cálculo e persistência
+async function saveTransformerInputsAndTriggerCalculations() {
+    console.log('[transformer_inputs.js - saveTransformerInputsAndTriggerCalculations] Coletando e enviando dados...');
+
+    // Coleta todos os dados do formulário transformer_inputs
+    const inputData = {
+        potencia_mva: getNumericValueOrNull('potencia_mva'),
+        frequencia: getNumericValueOrNull('frequencia'),
+        tipo_transformador: getStringValueOrNull('tipo_transformador'),
+        grupo_ligacao: getStringValueOrNull('grupo_ligacao'),
+        liquido_isolante: getStringValueOrNull('liquido_isolante'),
+        tipo_isolamento: getStringValueOrNull('tipo_isolamento'),
+        norma_iso: getStringValueOrNull('norma_iso'),
+        elevacao_oleo_topo: getNumericValueOrNull('elevacao_oleo_topo'),
+        elevacao_enrol: getNumericValueOrNull('elevacao_enrol'),
+        peso_parte_ativa: getNumericValueOrNull('peso_parte_ativa'),
+        peso_tanque_acessorios: getNumericValueOrNull('peso_tanque_acessorios'),
+        peso_oleo: getNumericValueOrNull('peso_oleo'),
+        peso_total: getNumericValueOrNull('peso_total'),
+        // AT
+        tensao_at: getNumericValueOrNull('tensao_at'),
+        classe_tensao_at: getNumericValueOrNull('classe_tensao_at'),
+        impedancia: getNumericValueOrNull('impedancia'),
+        nbi_at: getNumericValueOrNull('nbi_at'),
+        sil_at: getNumericValueOrNull('sil_at'),
+        conexao_at: getStringValueOrNull('conexao_at'),
+        tensao_bucha_neutro_at: getNumericValueOrNull('tensao_bucha_neutro_at'),
+        nbi_neutro_at: getNumericValueOrNull('nbi_neutro_at'),
+        sil_neutro_at: getNumericValueOrNull('sil_neutro_at'),
+        tensao_at_tap_maior: getNumericValueOrNull('tensao_at_tap_maior'),
+        tensao_at_tap_menor: getNumericValueOrNull('tensao_at_tap_menor'),
+        impedancia_tap_maior: getNumericValueOrNull('impedancia_tap_maior'),
+        impedancia_tap_menor: getNumericValueOrNull('impedancia_tap_menor'),
+        teste_tensao_aplicada_at: getNumericValueOrNull('teste_tensao_aplicada_at'),
+        teste_tensao_induzida_at: getNumericValueOrNull('teste_tensao_induzida_at'),
+        // BT
+        tensao_bt: getNumericValueOrNull('tensao_bt'),
+        classe_tensao_bt: getNumericValueOrNull('classe_tensao_bt'),
+        nbi_bt: getNumericValueOrNull('nbi_bt'),
+        sil_bt: getNumericValueOrNull('sil_bt'),
+        conexao_bt: getStringValueOrNull('conexao_bt'),
+        tensao_bucha_neutro_bt: getNumericValueOrNull('tensao_bucha_neutro_bt'),
+        nbi_neutro_bt: getNumericValueOrNull('nbi_neutro_bt'),
+        sil_neutro_bt: getNumericValueOrNull('sil_neutro_bt'),
+        teste_tensao_aplicada_bt: getNumericValueOrNull('teste_tensao_aplicada_bt'),
+        // Terciário
+        tensao_terciario: getNumericValueOrNull('tensao_terciario'),
+        classe_tensao_terciario: getNumericValueOrNull('classe_tensao_terciario'),
+        nbi_terciario: getNumericValueOrNull('nbi_terciario'),
+        sil_terciario: getNumericValueOrNull('sil_terciario'),
+        conexao_terciario: getStringValueOrNull('conexao_terciario'),
+        tensao_bucha_neutro_terciario: getNumericValueOrNull('tensao_bucha_neutro_terciario'),
+        nbi_neutro_terciario: getNumericValueOrNull('nbi_neutro_terciario'),
+        sil_neutro_terciario: getNumericValueOrNull('sil_neutro_terciario'),
+        teste_tensao_aplicada_terciario: getNumericValueOrNull('teste_tensao_aplicada_terciario')
+    };
+
+    console.log('[transformer_inputs.js - saveTransformerInputsAndTriggerCalculations] Dados coletados (inputData) antes do envio:', inputData);
+
+    try {
+        const response = await fetch('/api/transformer/inputs', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(inputData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: "Erro desconhecido ao processar resposta de erro." }));
+            console.error('[transformer_inputs.js - saveTransformerInputsAndTriggerCalculations] Falha ao salvar dados básicos:', response.status, errorData);
+            throw new Error(`Erro ${response.status} ao salvar dados básicos: ${errorData.detail || response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('[transformer_inputs.js - saveTransformerInputsAndTriggerCalculations] Resposta do backend (result):', result);
+        console.log('[transformer_inputs.js - saveTransformerInputsAndTriggerCalculations] Dados atualizados do backend (result.updated_data):', result.updated_data);
+
+        // Após o POST bem-sucedido, os dados calculados (incluindo correntes)
+        // estarão no MCP. Disparamos um evento para que o painel e os campos de corrente
+        // sejam atualizados lendo do MCP.
+        if (window.apiDataSystem) {
+            const store = window.apiDataSystem.getStore('transformerInputs');
+            // Não precisamos chamar store.getData() aqui, pois o evento já passa os dados atualizados.
+            // A chamada a store.getData() dentro de fillNominalCurrentsFromStore já buscará o mais recente.
+        }
+        document.dispatchEvent(new CustomEvent('transformerDataUpdated', {
+            detail: { storeId: 'transformerInputs', formData: result.updated_data }
+        }));
+
+    } catch (error) {
+        console.error('[transformer_inputs.js - saveTransformerInputsAndTriggerCalculations] Erro durante o POST:', error);
+        // Exibir erro para o usuário, se necessário
+        const lastSaveOkEl = document.getElementById('last-save-ok');
+        if (lastSaveOkEl) {
+            lastSaveOkEl.textContent = `Erro ao salvar: ${error.message}`;
+            lastSaveOkEl.className = 'col-md-6 offset-md-3 text-center text-danger small';
+        }
+    }
+}
+
+// Função para preencher os campos de corrente nominal a partir do store (que foi atualizado pelo backend)
 async function fillNominalCurrentsFromStore() {
     try {
-        console.log('[fillNominalCurrentsFromStore] Iniciando...');
-
-        // Usa a variável globalmente exposta
+        console.log('[transformer_inputs.js - fillNominalCurrentsFromStore] Iniciando...');
         if (!window.apiDataSystem) {
-            console.error('[fillNominalCurrentsFromStore] apiDataSystem não disponível');
+            console.error('[transformer_inputs.js - fillNominalCurrentsFromStore] apiDataSystem não disponível');
             return;
         }
-
         const store = window.apiDataSystem.getStore('transformerInputs');
-        if (!store) {
-            console.error('[fillNominalCurrentsFromStore] Store não encontrado');
-            return;
+        const data = await store.getData(); // Isso buscará do cache ou do backend
+
+        let formData = {};
+        if (data && data.formData) {
+            formData = data.formData;
+        } else if (data && Object.keys(data).length > 0 && !data.formData) {
+            // Se os dados vierem diretamente (sem a estrutura {formData: ...}), como após um GET
+            formData = data;
         }
 
-        const data = await store.getData();
-        console.log('[fillNominalCurrentsFromStore] Dados recebidos:', data);
+        console.log('[transformer_inputs.js - fillNominalCurrentsFromStore] Dados do formData para preenchimento (do store):', formData);
 
-        // Verifica se os dados estão no nível raiz ou em formData
-        let currentData = data || {};
-        if (data && data.formData && Object.keys(data.formData).length > 0) {
-            console.log('[fillNominalCurrentsFromStore] Usando dados de formData');
-            currentData = { ...data, ...data.formData };
+        const fieldsToUpdate = {
+            'corrente_nominal_at': formData.corrente_nominal_at,
+            'corrente_nominal_bt': formData.corrente_nominal_bt,
+            'corrente_nominal_terciario': formData.corrente_nominal_terciario,
+            'corrente_nominal_at_tap_maior': formData.corrente_nominal_at_tap_maior,
+            'corrente_nominal_at_tap_menor': formData.corrente_nominal_at_tap_menor
+        };
+
+        for (const [id, value] of Object.entries(fieldsToUpdate)) {
+            const element = document.getElementById(id);
+            if (element) {
+                // Verifica se o valor é um número antes de formatar
+                if (typeof value === 'number' && !isNaN(value)) {
+                    element.value = value.toFixed(2);
+                } else {
+                    element.value = ''; // Limpa se não for um número válido
+                }
+                console.log(`[transformer_inputs.js - fillNominalCurrentsFromStore] Campo ${id} atualizado para: ${element.value} (valor original: ${value})`);
+            } else {
+                console.warn(`[transformer_inputs.js - fillNominalCurrentsFromStore] Elemento ${id} não encontrado.`);
+            }
         }
-
-        console.log('[fillNominalCurrentsFromStore] Dados processados:', currentData);
-
-        // AT
-        const correnteAT = document.getElementById('corrente_nominal_at');
-        if (correnteAT) {
-            const valor = currentData.corrente_nominal_at ?? '';
-            correnteAT.value = valor;
-            console.log('[fillNominalCurrentsFromStore] AT:', valor);
-        }
-
-        // BT
-        const correnteBT = document.getElementById('corrente_nominal_bt');
-        if (correnteBT) {
-            const valor = currentData.corrente_nominal_bt ?? '';
-            correnteBT.value = valor;
-            console.log('[fillNominalCurrentsFromStore] BT:', valor);
-        }
-
-        // Terciário
-        const correnteTer = document.getElementById('corrente_nominal_terciario');
-        if (correnteTer) {
-            const valor = currentData.corrente_nominal_terciario ?? '';
-            correnteTer.value = valor;
-            console.log('[fillNominalCurrentsFromStore] Terciário:', valor);
-        }
-
-        // Taps AT
-        const correnteATTapMaior = document.getElementById('corrente_nominal_at_tap_maior');
-        if (correnteATTapMaior) {
-            const valor = currentData.corrente_nominal_at_tap_maior ?? '';
-            correnteATTapMaior.value = valor;
-            console.log('[fillNominalCurrentsFromStore] Tap Maior:', valor);
-        }
-
-        const correnteATTapMenor = document.getElementById('corrente_nominal_at_tap_menor');
-        if (correnteATTapMenor) {
-            const valor = currentData.corrente_nominal_at_tap_menor ?? '';
-            correnteATTapMenor.value = valor;
-            console.log('[fillNominalCurrentsFromStore] Tap Menor:', valor);
-        }
-
-        console.log('[fillNominalCurrentsFromStore] Concluído');
-
+        console.log('[transformer_inputs.js - fillNominalCurrentsFromStore] Concluído.');
     } catch (error) {
-        console.error('[fillNominalCurrentsFromStore] Erro:', error);
+        console.error('[transformer_inputs.js - fillNominalCurrentsFromStore] Erro:', error);
     }
 }
 
-// Função para invocar o cálculo de correntes nominais no backend e atualizar o store
-async function computeNominalCurrents() {
-    console.log('[transformer_inputs] Computando correntes nominais no backend...');
-    const formElement = document.getElementById('transformer-inputs-form-container');
-    const formData = collectFormData(formElement);
-    const response = await fetch('/api/transformer/inputs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-    });
-    if (!response.ok) throw new Error(`Erro ao calcular correntes nominais: ${response.status}`);
-    const result = await response.json();
-    const updated = result.updated_data;
-    const store = window.apiDataSystem.getStore('transformerInputs');
-    await store.updateData({ formData: updated });
-    console.log('[transformer_inputs] Store transformerInputs atualizado com dados calculados:', updated);
-}
-
-// Atualiza correntes nominais sempre que campos relevantes mudam
-function setupNominalCurrentAutoUpdate() {
-    const ids = [
-        'potencia_mva', 'tensao_at', 'tensao_bt', 'tensao_terciario', 'tipo_transformador',
-        'tensao_at_tap_maior', 'tensao_at_tap_menor'
+// Configura listeners para os campos que disparam o recálculo/salvamento
+function setupAutoSaveAndRecalculateTrigger() {
+    const idsToWatch = [
+        'potencia_mva', 'frequencia', 'tipo_transformador', 'grupo_ligacao',
+        'liquido_isolante', 'tipo_isolamento', 'norma_iso', 'elevacao_oleo_topo',
+        'elevacao_enrol', 'peso_parte_ativa', 'peso_tanque_acessorios',
+        'peso_oleo', 'peso_total', 'tensao_at', 'classe_tensao_at',
+        'impedancia', 'nbi_at', 'sil_at', 'conexao_at', 'tensao_bucha_neutro_at',
+        'nbi_neutro_at', 'sil_neutro_at', 'tensao_at_tap_maior',
+        'tensao_at_tap_menor', 'impedancia_tap_maior', 'impedancia_tap_menor',
+        'teste_tensao_aplicada_at', 'teste_tensao_induzida_at', 'tensao_bt',
+        'classe_tensao_bt', 'nbi_bt', 'sil_bt', 'conexao_bt',
+        'tensao_bucha_neutro_bt', 'nbi_neutro_bt', 'sil_neutro_bt',
+        'teste_tensao_aplicada_bt', 'tensao_terciario',
+        'classe_tensao_terciario', 'nbi_terciario', 'sil_terciario',
+        'conexao_terciario', 'tensao_bucha_neutro_terciario',
+        'nbi_neutro_terciario', 'sil_neutro_terciario',
+        'teste_tensao_aplicada_terciario'
     ];
-    
-    let updateTimeout;
-    
-    ids.forEach(id => {
+
+    let debounceTimeout;
+
+    idsToWatch.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            el.addEventListener('change', async () => {
-                console.log(`[setupNominalCurrentAutoUpdate] Campo alterado: ${id}`);
-                
-                // Cancela timeout anterior se existir
-                if (updateTimeout) {
-                    clearTimeout(updateTimeout);
-                }
-                
-                // Aguarda debounce para persistência e cálculo no backend
-                updateTimeout = setTimeout(async () => {
-                    console.log('[setupNominalCurrentAutoUpdate] Atualizando correntes...');
-                    try {
-                        await computeNominalCurrents();
-                    } catch (error) {
-                        console.error('[transformer_inputs] Falha ao calcular correntes:', error);
-                    }
-                    await fillNominalCurrentsFromStore();
-                }, 1000);
-             });
-         }
-     });
+            // Usar 'input' para campos de texto/número para capturar digitação
+            // Usar 'change' para selects
+            const eventType = (el.tagName === 'SELECT' || el.type === 'number') ? 'change' : 'input';
+
+            el.addEventListener(eventType, () => {
+                console.log(`[transformer_inputs.js - setupAutoSaveAndRecalculateTrigger] Campo alterado: ${id}`);
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(async () => {
+                    console.log('[transformer_inputs.js - setupAutoSaveAndRecalculateTrigger] Debounce concluído. Salvando e disparando cálculos...');
+                    await saveTransformerInputsAndTriggerCalculations();
+                    // As correntes serão atualizadas pelo evento 'transformerDataUpdated'
+                    // que chama fillNominalCurrentsFromStore.
+                }, 750); // Ajuste o delay conforme necessário
+            });
+        } else {
+            console.warn(`[transformer_inputs.js - setupAutoSaveAndRecalculateTrigger] Elemento ${id} não encontrado para adicionar listener.`);
+        }
+    });
+    console.log('[transformer_inputs.js - setupAutoSaveAndRecalculateTrigger] Listeners de auto-save configurados.');
 }
 
-// Função de inicialização do módulo Dados Básicos
 async function initTransformerInputs() {
-    console.log('[initTransformerInputs] Iniciando...');
+    console.log('[transformer_inputs.js - initTransformerInputs] Iniciando...');
 
-    // Verificar se o DOM está pronto
     if (document.readyState === 'loading') {
-        console.log('[initTransformerInputs] DOM ainda carregando, aguardando...');
         await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
     }
-    console.log('[initTransformerInputs] DOM pronto');
+    await new Promise(resolve => setTimeout(resolve, 100)); // Pequeno delay adicional
 
-    // Adiciona um pequeno atraso para garantir que o DOM esteja totalmente renderizado
-    await new Promise(resolve => setTimeout(resolve, 200));
-    console.log('[initTransformerInputs] Atraso de 200ms concluído.');
+    // 0. O painel de info não deve ser exibido nesta página
+    const infoPanel = document.getElementById('transformer-info-transformer_inputs-page');
+    if (infoPanel) {
+        infoPanel.innerHTML = '';
+        infoPanel.classList.add('d-none');
+    }
 
-
-    // Preenche o painel de informações do transformador
-    await loadAndPopulateTransformerInfo('transformer-info-transformer_inputs-page');
-
-    // Configura persistência via backend e localStorage
-    console.log('[initTransformerInputs] Configurando persistência...');
+    // 1. Configura persistência automática para o formulário principal (usa api_persistence.js)
+    // Esta persistência fará PATCH para /api/data/stores/transformerInputs
+    // Não é ela que dispara os cálculos diretamente, mas mantém o estado do formulário.
     await setupFormPersistence('transformer-inputs-form-container', 'transformerInputs');
 
-    // Preenche as correntes nominais calculadas
-    await fillNominalCurrentsFromStore();
+    // 2. Inicializa os dropdowns de isolamento (isso vai popular as opções)
+    await initializeIsolationDropdowns();
 
-    // Configura atualização automática das correntes nominais
-    setupNominalCurrentAutoUpdate();
-
-    // Dispara evento inicial para atualizar templates com dados existentes
-    const store = window.apiDataSystem?.getStore('transformerInputs');
-    if (store) {
-        const existingData = await store.getData();
-        if (existingData && existingData.formData && Object.keys(existingData.formData).length > 0) {
-            document.dispatchEvent(new CustomEvent('transformerDataUpdated', {
-                detail: { storeId: 'transformerInputs', formData: existingData.formData }
-            }));
-            console.log('[initTransformerInputs] Evento inicial transformerDataUpdated disparado');
+    // 3. Preenche o formulário com dados do store, SE EXISTIREM.
+    // Isso inclui os valores selecionados para os dropdowns de isolamento.
+    if (window.apiDataSystem) {
+        const store = window.apiDataSystem.getStore('transformerInputs');
+        const existingData = await store.getData(); // Busca do backend/cache
+        if (existingData) {
+            let dataToFill = existingData.formData || existingData; // Lida com ambas estruturas
+             if (Object.keys(dataToFill).length > 0) {
+                const formElement = document.getElementById('transformer-inputs-form-container');
+                if (formElement) {
+                    console.log("[transformer_inputs.js - initTransformerInputs] Preenchendo formulário com dados do store:", dataToFill);
+                    window.fillFormWithData(formElement, dataToFill); // Usa a função global
+                }
+            } else {
+                 console.log("[transformer_inputs.js - initTransformerInputs] Nenhum dado de formData encontrado no store para preencher o formulário.");
+            }
         }
     }
 
+    // 4. Preenche os campos de corrente nominal com base nos dados já calculados (se houver)
+    await fillNominalCurrentsFromStore();
 
-    // Inicializa e configura os dropdowns de níveis de isolamento
-    await initializeIsolationDropdowns();
+    // 5. Configura listeners para que qualquer alteração nos inputs dispare
+    //    a função saveTransformerInputsAndTriggerCalculations (que faz o POST).
+    setupAutoSaveAndRecalculateTrigger();
 
-    // Configura listeners para a visibilidade dos campos de neutro
+    // 6. Configura listeners para a visibilidade dos campos de neutro
     const enrolamentoPrefixos = ['at', 'bt', 'terciario'];
     enrolamentoPrefixos.forEach(prefixo => {
         const conexaoDropdown = document.getElementById(`conexao_${prefixo}`);
@@ -232,26 +299,29 @@ async function initTransformerInputs() {
             conexaoDropdown.addEventListener('change', (event) => {
                 toggleNeutralFieldsVisibility(prefixo, event.target.value);
             });
-            // Garante que a visibilidade inicial seja correta ao carregar a página
-            toggleNeutralFieldsVisibility(prefixo, conexaoDropdown.value);
+            toggleNeutralFieldsVisibility(prefixo, conexaoDropdown.value); // Estado inicial
         }
     });
+
+    // Listener para atualizar os campos de corrente quando 'transformerDataUpdated' for disparado
+    // (geralmente após saveTransformerInputsAndTriggerCalculations ser bem sucedido)
+    document.addEventListener('transformerDataUpdated', async (event) => {
+        if (event.detail.storeId === 'transformerInputs') {
+            console.log('[transformer_inputs.js] Evento transformerDataUpdated recebido. Atualizando campos de corrente.');
+            await fillNominalCurrentsFromStore(); // Atualiza os campos de corrente
+            // Também garantir que os campos de input normais sejam atualizados se o backend os modificou
+            const formElement = document.getElementById('transformer-inputs-form-container');
+            if(formElement && event.detail.formData) {
+                window.fillFormWithData(formElement, event.detail.formData);
+            }
+        }
+    });
+
+    console.log('[transformer_inputs.js - initTransformerInputs] Concluído.');
 }
 
-// Garante que o painel de informações do transformador nunca seja exibido nesta página
-window.addEventListener('DOMContentLoaded', () => {
-    const infoPanel = document.getElementById('transformer-info-transformer_inputs-page');
-    if (infoPanel) {
-        infoPanel.innerHTML = '';
-        infoPanel.classList.add('d-none');
-        infoPanel.style.display = 'none';
-    }
-});
-
-// SPA routing: executa quando o módulo transformer_inputs é carregado
 document.addEventListener('moduleContentLoaded', (event) => {
     if (event.detail && event.detail.moduleName === 'transformer_inputs') {
-        console.log('[transformer_inputs] SPA routing init');
         initTransformerInputs();
     }
 });

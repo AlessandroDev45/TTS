@@ -336,7 +336,7 @@ async function handleCalculateNoLoad() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    },
+                },
                 body: JSON.stringify({
                     basicData: basicData,
                     moduleData: noLoadInputs
@@ -388,7 +388,7 @@ async function handleCalculateLoad() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    },
+                },
                 body: JSON.stringify({
                     basicData: basicData,
                     moduleData: { ...collectNoLoadInputs(), ...loadInputs }

@@ -91,11 +91,7 @@ async def update_transformer_inputs(data: TransformerInputsData = Body(...)):
         input_data_dict = data.model_dump(exclude_unset=True)
         
         # Calcula os dados derivados (correntes nominais, etc.)
-        try:
-            calculated_data = transformer_service.calculate_and_process_transformer_data(input_data_dict)
-        except Exception as e:
-            log.error(f"Erro ao calcular correntes nominais: {e}")
-            raise HTTPException(status_code=500, detail=f"Erro ao calcular correntes nominais: {str(e)}")
+        calculated_data = transformer_service.calculate_and_process_transformer_data(input_data_dict)
         
         # Combina os dados de entrada com os dados calculados
         final_data = {**input_data_dict, **calculated_data}
@@ -114,11 +110,7 @@ async def update_transformer_inputs(data: TransformerInputsData = Body(...)):
             }
         else:
             raise HTTPException(status_code=500, detail="Falha ao persistir dados do transformador.")
-    except HTTPException:
-        raise
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Erro ao processar dados do transformador: {str(e)}")
 
 # Rotas para processamento de módulos específicos conforme arquitetura TTS
@@ -142,51 +134,36 @@ async def process_module_data(module_id: str, data: Dict[str, Any] = Body(...)):
 
         # Chama service específico com base no module_id
         processed_data = {}
+        if module_id == 'losses':
+            processed_data = losses_service.calculate_losses(basic_data, module_data)
+        elif module_id == 'impulse':
+            processed_data = impulse_service.calculate_impulse(basic_data, module_data)
+        elif module_id == 'appliedVoltage':
+            processed_data = applied_voltage_service.calculate_applied_voltage(basic_data, module_data)
+        elif module_id == 'inducedVoltage':
+            processed_data = induced_voltage_service.calculate_induced_voltage(basic_data, module_data)
+        elif module_id == 'shortCircuit':
+            processed_data = short_circuit_service.calculate_short_circuit(basic_data, module_data)
+        elif module_id == 'temperatureRise':
+            processed_data = temperature_service.calculate_temperature_rise(basic_data, module_data)
+        elif module_id == 'dielectricAnalysis':
+            processed_data = dielectric_service.analyze_dielectric(basic_data, module_data)
+        else:
+            # Isso não deve acontecer devido à validação de valid_modules, mas é um fallback
+            raise HTTPException(status_code=500, detail=f"Serviço para o módulo '{module_id}' não implementado.")
+
+        # Armazena no MCP
         if mcp_data_manager is None:
             raise HTTPException(status_code=500, detail="Sistema de dados não inicializado")
 
-        processed_results = {}
-        if module_id == 'losses':
-            # A função calculate_losses espera basic_data e module_inputs
-            processed_results = losses_service.calculate_losses(basic_data, module_data)
-        elif module_id == 'impulse':
-            processed_results = impulse_service.calculate_impulse(basic_data, module_data)
-        elif module_id == 'appliedVoltage':
-            # Renomear a função no service para aceitar basic_data e module_inputs
-            processed_results = applied_voltage_service.calculate_applied_voltage(basic_data, module_data)
-        elif module_id == 'inducedVoltage':
-            processed_results = induced_voltage_service.calculate_induced_voltage(basic_data, module_data)
-        elif module_id == 'shortCircuit':
-            processed_results = short_circuit_service.calculate_short_circuit_analysis(basic_data) # short_circuit_service parece usar só basic_data
-            # Se precisar de module_inputs para short_circuit, adapte o service e passe module_inputs aqui
-        elif module_id == 'temperatureRise':
-            # temperatureRise precisa de 'losses' results. Se 'losses' é uma dependência,
-            # o _propagate_changes deveria garantir que 'losses' é processado primeiro.
-            # Aqui, assumimos que os resultados de 'losses' estão no MCP ou são passados.
-            # Para simplificar, o service de temperatureRise deve buscar 'losses' do mcp_data_manager internamente ou tê-los passados.
-            losses_data_from_mcp = mcp_data_manager.get_data('losses') # Pega os dados completos de losses
-            losses_results = losses_data_from_mcp.get('results', {}).get('perdas_carga', {}) # Exemplo de como pegar perdas em carga
-            
-            # Crie um combined_data ou passe os dados separadamente para o service de temperature
-            temperature_service_input = {**basic_data, **module_data, **losses_results} # Simplificação
-            processed_results = temperature_service.calculate_temperature_analysis(temperature_service_input)
-
-        elif module_id == 'dielectricAnalysis':
-             # dielectric_service.analyze_dielectric_strength já espera um 'data' combinado
-             # Podemos combinar basic_data e module_inputs aqui
-             combined_dielectric_data = {**basic_data, **module_data}
-             processed_results = dielectric_service.analyze_dielectric_strength(combined_dielectric_data)
-
-
-        # Armazena no MCP a estrutura completa: inputs, basicData (snapshot), e results
-        store_data_to_save = {
-            'inputs': module_data, # Os inputs que vieram do formulário do módulo
-            'basicData': basic_data,   # Um snapshot dos dados básicos usados para este cálculo
-            'results': processed_results,
-            'lastUpdated': datetime.now().isoformat()
+        store_data = {
+            'inputs': module_data,
+            'basicData': basic_data,
+            'results': processed_data,
+            'lastUpdated': str(pathlib.Path(__file__).stat().st_mtime)  # timestamp simples
         }
 
-        success = mcp_data_manager.set_data(module_id, store_data_to_save) # Usar set_data para sobrescrever completamente
+        success = mcp_data_manager.patch_data(module_id, store_data)
 
         if not success:
             raise HTTPException(status_code=500, detail=f"Erro ao armazenar dados do módulo {module_id}")
@@ -194,16 +171,14 @@ async def process_module_data(module_id: str, data: Dict[str, Any] = Body(...)):
         return {
             'success': True,
             'module': module_id,
-            'message': f'Dados do módulo {module_id} processados e salvos com sucesso',
-            'saved_data': store_data_to_save # Retorna os dados salvos para o cliente (propagação)
+            'results': processed_data,
+            'message': f'Dados do módulo {module_id} processados com sucesso'
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Erro interno no processamento do módulo {module_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @router.post("/global-update")
 async def trigger_global_update(data: Dict[str, Any] = Body(...)):

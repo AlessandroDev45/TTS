@@ -364,54 +364,6 @@ document.addEventListener('DOMContentLoaded', async () => { // Tornar o listener
     // ===== FUNÇÕES GLOBAIS PARA DEBUG =====
     // Disponibiliza globalmente para debug (dentro do escopo onde loadModulePage existe)
     window.loadModulePage = loadModulePage;
-
-    // Eventos para limpeza de dados via botão Limpar Campos
-    document.addEventListener('clearModuleData', async (e) => {
-        const module = e.detail.module;
-        console.log(`[main.js] Limpando dados do módulo: ${module}`);
-        // Mapeamento de nomes de módulos para store IDs usados no backend
-        const moduleToStoreMap = {
-            transformer_inputs: 'transformerInputs',
-            losses: 'losses',
-            impulse: 'impulse',
-            applied_voltage: 'appliedVoltage',
-            induced_voltage: 'inducedVoltage',
-            short_circuit: 'shortCircuit',
-            temperature_rise: 'temperatureRise',
-            dielectric_analysis: 'dielectricAnalysis',
-            history: 'sessions',
-            standards: 'standards'
-        };
-        const storeId = moduleToStoreMap[module] || module;
-        console.log(`[main.js] StoreId correspondente: ${storeId}`);
-        try {
-            const url = `http://localhost:8000/api/data/stores/${storeId}`;
-            const response = await fetch(url, { method: 'DELETE' });
-            if (!response.ok) throw new Error(`Erro ao limpar store ${module}: ${response.status}`);
-            console.log(`[main.js] Store ${module} limpa no backend`);
-        } catch (error) {
-            console.error('[main.js] Falha ao limpar store no backend:', error);
-        }
-        apiDataSystem.stores.delete(storeId);
-        clearModuleCache(module);
-        if (currentLoadedModule === module) {
-            loadModulePage(module, false);
-        }
-    });
-
-    document.addEventListener('clearAllModulesData', async () => {
-        console.log('[main.js] Limpando todos os módulos');
-        try {
-            const response = await fetch('http://localhost:8000/api/data/stores', { method: 'DELETE' });
-            if (!response.ok) throw new Error(`Erro ao limpar todos os stores: ${response.status}`);
-            console.log('[main.js] Todos os stores limpos no backend');
-        } catch (error) {
-            console.error('[main.js] Falha ao limpar todos os stores no backend:', error);
-        }
-        apiDataSystem.stores.clear();
-        clearModuleCache(null);
-        loadModulePage('transformer_inputs', false);
-    });
 });
 
 // Função global para limpar cache de módulos (funciona no console do navegador)

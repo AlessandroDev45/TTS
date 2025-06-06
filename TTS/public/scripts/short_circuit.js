@@ -111,24 +111,11 @@ async function setupCalcButton() {
                 }
 
                 let limitDeltaZ = 0;
-                switch (powerCategory) {
-                    case 'I':
-                        limitDeltaZ = 7.5;
-                        break;
-                    case 'II':
-                        limitDeltaZ = 5.0;
-                        break;
-                    case 'III':
-                        limitDeltaZ = 2.0;
-                        break;
-                    default:
-                        errorMessage = "Selecione uma categoria de potência.";
-                        break; // Adicionado break para evitar que o código continue executando
-                }
-
-                if (errorMessage) {
-                    document.getElementById('short-circuit-error-message').textContent = errorMessage;
-                    return; // Aborta a execução se houver um erro
+                switch(powerCategory) {
+                    case 'I': limitDeltaZ = 7.5; break;
+                    case 'II': limitDeltaZ = 5.0; break;
+                    case 'III': limitDeltaZ = 2.0; break;
+                    default: errorMessage = "Selecione uma categoria de potência."; return;
                 }
 
                 const diffZ = Math.abs(impedanceAfter - impedanceBefore);

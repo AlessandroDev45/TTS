@@ -19,7 +19,6 @@ if str(backend_dir) not in sys.path:
 # Tenta importar constantes para o serviço
 try:
     from ..utils import constants as const
-    from .transformer_service import calculate_nominal_currents
 except ImportError:
     try:
         from backend.utils import constants as const
@@ -35,23 +34,55 @@ except ImportError:
             const = MockConstants()
 
 
-def calculate_impedances(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, float]:
+def calculate_nominal_currents(data: Dict[str, Any]) -> Dict[str, float]:
+    """
+    Calcula as correntes nominais conforme seção 2.1 da documentação,
+    incluindo o lado terciário.
+    
+    Args:
+        data: Dicionário com os parâmetros do transformador
+    
+    Returns:
+        Dicionário com as correntes nominais calculadas
+    """
+    potencia_nominal = data.get("potencia_mva", 0)
+    tensao_at = data.get("tensao_at", 0)
+    tensao_bt = data.get("tensao_bt", 0)
+    tensao_terciario = data.get("tensao_terciario", 0) # Adicionado terciário
+    tipo_transformador = data.get("tipo_transformador", "Trifásico")
+    
+    # Determina o fator conforme o tipo de transformador (seção 2.1.1 e 2.1.2)
+    fator = 1.0 if tipo_transformador.lower() == "monofásico" else const.SQRT_3
+    
+    # Calcula as correntes nominais
+    i_nom_at = (potencia_nominal * 1000) / (fator * tensao_at) if tensao_at > 0 else 0
+    i_nom_bt = (potencia_nominal * 1000) / (fator * tensao_bt) if tensao_bt > 0 else 0
+    # Cálculo para o lado terciário
+    i_nom_ter = (potencia_nominal * 1000) / (fator * tensao_terciario) if tensao_terciario > 0 else 0
+    
+    return {
+        "i_nom_at": i_nom_at,
+        "i_nom_bt": i_nom_bt,
+        "i_nom_ter": i_nom_ter # Adicionado terciário
+    }
+
+
+def calculate_impedances(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calcula as impedâncias de curto-circuito conforme seção 2.2 da documentação,
     incluindo o lado terciário.
     
     Args:
-        basic_data: Dicionário com os parâmetros do transformador
-        module_inputs: Dicionário com os parâmetros do módulo de curto-circuito
+        data: Dicionário com os parâmetros do transformador
     
     Returns:
         Dicionário com as impedâncias calculadas
     """
-    potencia_nominal = basic_data.get("potencia_mva", 0)
-    tensao_at = basic_data.get("tensao_at", 0)
-    tensao_bt = basic_data.get("tensao_bt", 0)
-    tensao_terciario = basic_data.get("tensao_terciario", 0) # Adicionado terciário
-    impedancia_percentual = basic_data.get("impedancia", 0)
+    potencia_nominal = data.get("potencia_mva", 0)
+    tensao_at = data.get("tensao_at", 0)
+    tensao_bt = data.get("tensao_bt", 0)
+    tensao_terciario = data.get("tensao_terciario", 0) # Adicionado terciário
+    impedancia_percentual = data.get("impedancia", 0)
     
     # Converte a impedância para p.u.
     z_pu = impedancia_percentual / 100
@@ -73,21 +104,20 @@ def calculate_impedances(basic_data: Dict[str, Any], module_inputs: Dict[str, An
     }
 
 
-def calculate_symmetric_short_circuit_current(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, float]:
+def calculate_symmetric_short_circuit_current(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calcula a corrente de curto-circuito simétrica conforme seção 2.3 da documentação,
     incluindo o lado terciário.
     
     Args:
-        basic_data: Dicionário com os parâmetros do transformador e da rede
-        module_inputs: Dicionário com os parâmetros do módulo de curto-circuito
+        data: Dicionário com os parâmetros do transformador e da rede
     
     Returns:
         Dicionário com as correntes de curto-circuito simétricas calculadas
     """
-    potencia_nominal = basic_data.get("potencia_mva", 0)
-    potencia_cc_rede = module_inputs.get("potencia_cc_rede", 0)
-    impedancia_percentual = basic_data.get("impedancia", 0)
+    potencia_nominal = data.get("potencia_mva", 0)
+    potencia_cc_rede = data.get("potencia_cc_rede", 0)
+    impedancia_percentual = data.get("impedancia", 0)
     
     # Impedâncias equivalentes
     z_trafo_pu = impedancia_percentual / 100
@@ -95,11 +125,10 @@ def calculate_symmetric_short_circuit_current(basic_data: Dict[str, Any], module
     z_total_pu = z_trafo_pu + z_rede_pu
     
     # Correntes nominais calculadas previamente
-    # Obtém correntes nominais a partir de transformer_service
-    nominal = calculate_nominal_currents(basic_data)
-    i_nom_at = nominal.get("i_nom_at", 0)
-    i_nom_bt = nominal.get("i_nom_bt", 0)
-    i_nom_ter = nominal.get("i_nom_ter", 0)
+    nom_currents = calculate_nominal_currents(data)
+    i_nom_at = nom_currents["i_nom_at"]
+    i_nom_bt = nom_currents["i_nom_bt"]
+    i_nom_ter = nom_currents["i_nom_ter"] # Adicionado terciário
     
     # Correntes de curto-circuito simétricas
     # Nota: Para transformadores de 3 enrolamentos, a corrente de curto-circuito
@@ -120,29 +149,27 @@ def calculate_symmetric_short_circuit_current(basic_data: Dict[str, Any], module
     }
 
 
-def calculate_asymmetric_short_circuit_current(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, float]:
+def calculate_asymmetric_short_circuit_current(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calcula a corrente de curto-circuito assimétrica conforme seção 2.4 da documentação,
     incluindo o lado terciário.
     
     Args:
-        basic_data: Dicionário com os parâmetros do transformador e da rede
-        module_inputs: Dicionário com os parâmetros do módulo de curto-circuito
+        data: Dicionário com os parâmetros do transformador e da rede
     
     Returns:
         Dicionário com as correntes de curto-circuito assimétricas calculadas
     """
-    fator_xr = module_inputs.get("fator_xr", 10)  # Relação X/R padrão = 10
+    fator_xr = data.get("fator_xr", 10)  # Relação X/R padrão = 10
     
     # Fator de assimetria
     k_asym = math.sqrt(1 + 2 * math.exp(-math.pi / fator_xr))
     
     # Correntes de curto-circuito simétricas calculadas previamente
-    # Use correntes simétricas calculadas
-    sym_currents = calculate_symmetric_short_circuit_current(basic_data, module_inputs)
-    i_cc_sim_at = sym_currents.get("i_cc_sim_at", 0)
-    i_cc_sim_bt = sym_currents.get("i_cc_sim_bt", 0)
-    i_cc_sim_ter = sym_currents.get("i_cc_sim_ter", 0) # Adicionado terciário
+    sym_currents = calculate_symmetric_short_circuit_current(data)
+    i_cc_sim_at = sym_currents["i_cc_sim_at"]
+    i_cc_sim_bt = sym_currents["i_cc_sim_bt"]
+    i_cc_sim_ter = sym_currents["i_cc_sim_ter"] # Adicionado terciário
     
     # Correntes de curto-circuito assimétricas (pico)
     i_cc_asym_at = k_asym * math.sqrt(2) * i_cc_sim_at
@@ -157,25 +184,24 @@ def calculate_asymmetric_short_circuit_current(basic_data: Dict[str, Any], modul
     }
 
 
-def calculate_thermal_effects(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, float]:
+def calculate_thermal_effects(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calcula os efeitos térmicos do curto-circuito conforme seção 2.5 da documentação,
     incluindo o lado terciário.
     
     Args:
-        basic_data: Dicionário com os parâmetros do transformador e da rede
-        module_inputs: Dicionário com os parâmetros do módulo de curto-circuito
+        data: Dicionário com os parâmetros do transformador e da rede
     
     Returns:
         Dicionário com os resultados dos efeitos térmicos calculados
     """
-    duracao_cc = module_inputs.get("duracao_cc", 1.0)  # segundos
+    duracao_cc = data.get("duracao_cc", 1.0)  # segundos
     
     # Correntes de curto-circuito simétricas calculadas previamente
-    sym_currents = calculate_symmetric_short_circuit_current(basic_data, module_inputs)
-    i_cc_sim_at = sym_currents.get("i_cc_sim_at", 0)
-    i_cc_sim_bt = sym_currents.get("i_cc_sim_bt", 0)
-    i_cc_sim_ter = sym_currents.get("i_cc_sim_ter", 0) # Adicionado terciário
+    sym_currents = calculate_symmetric_short_circuit_current(data)
+    i_cc_sim_at = sym_currents["i_cc_sim_at"]
+    i_cc_sim_bt = sym_currents["i_cc_sim_bt"]
+    i_cc_sim_ter = sym_currents["i_cc_sim_ter"] # Adicionado terciário
     
     # Integral de Joule (I²t)
     i_squared_t_at = (i_cc_sim_at ** 2) * duracao_cc
@@ -183,9 +209,9 @@ def calculate_thermal_effects(basic_data: Dict[str, Any], module_inputs: Dict[st
     i_squared_t_ter = (i_cc_sim_ter ** 2) * duracao_cc # Adicionado terciário
     
     # Energia térmica dissipada (kWs)
-    r_at = module_inputs.get("resistencia_at", 0.1)  # ohm (valor assumido)
-    r_bt = module_inputs.get("resistencia_bt", 0.01)  # ohm (valor assumido)
-    r_ter = module_inputs.get("resistencia_ter", 0.005) # ohm (valor assumido para terciário)
+    r_at = data.get("resistencia_at", 0.1)  # ohm (valor assumido)
+    r_bt = data.get("resistencia_bt", 0.01)  # ohm (valor assumido)
+    r_ter = data.get("resistencia_ter", 0.005) # ohm (valor assumido para terciário)
     
     energia_termica_at = r_at * i_squared_t_at / 1000
     energia_termica_bt = r_bt * i_squared_t_bt / 1000
@@ -202,7 +228,7 @@ def calculate_thermal_effects(basic_data: Dict[str, Any], module_inputs: Dict[st
     }
 
 
-def calculate_dynamic_forces(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, float]:
+def calculate_dynamic_forces(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calcula as forças dinâmicas de curto-circuito conforme seção 2.6 da documentação.
     As fórmulas aqui são mais genéricas para um sistema de dois enrolamentos.
@@ -211,14 +237,13 @@ def calculate_dynamic_forces(basic_data: Dict[str, Any], module_inputs: Dict[str
     Esta função mantém o modelo original para forças axiais e radiais.
     
     Args:
-        basic_data: Dicionário com os parâmetros do transformador
-        module_inputs: Dicionário com os parâmetros do módulo de curto-circuito
+        data: Dicionário com os parâmetros do transformador
     
     Returns:
         Dicionário com as forças dinâmicas calculadas
     """
     # Correntes de curto-circuito assimétricas calculadas previamente
-    asym_currents = calculate_asymmetric_short_circuit_current(basic_data, module_inputs)
+    asym_currents = calculate_asymmetric_short_circuit_current(data)
     i_cc_asym_at = asym_currents["i_cc_asym_at"]
     i_cc_asym_bt = asym_currents["i_cc_asym_bt"]
     # i_cc_asym_ter = asym_currents["i_cc_asym_ter"] # Não utilizado diretamente no modelo atual de forças dinâmicas genéricas
@@ -227,10 +252,10 @@ def calculate_dynamic_forces(basic_data: Dict[str, Any], module_inputs: Dict[str
     k_forca = 2e-7  # N/A² (µ₀/2π)
     
     # Comprimento efetivo dos condutores (assumido)
-    l_efetivo = module_inputs.get("comprimento_enrolamento", 1.0)  # metros
+    l_efetivo = data.get("comprimento_enrolamento", 1.0)  # metros
     
     # Distância entre condutores (assumido)
-    d_condutores = module_inputs.get("distancia_condutores", 0.1)  # metros
+    d_condutores = data.get("distancia_condutores", 0.1)  # metros
     
     # Forças eletromagnéticas (N)
     # Assumimos que as forças axiais e radiais são dominadas pela interação entre AT e BT
@@ -243,7 +268,7 @@ def calculate_dynamic_forces(basic_data: Dict[str, Any], module_inputs: Dict[str
     }
 
 
-def calculate_mechanical_forces(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, float]:
+def calculate_mechanical_forces(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calcula os esforços mecânicos do curto-circuito conforme seção 3 da documentação.
     Assim como as forças dinâmicas, o cálculo preciso para um transformador de 3 enrolamentos
@@ -251,20 +276,19 @@ def calculate_mechanical_forces(basic_data: Dict[str, Any], module_inputs: Dict[
     Esta função mantém o modelo original.
     
     Args:
-        basic_data: Dicionário com os parâmetros do transformador e do curto-circuito
-        module_inputs: Dicionário com os parâmetros do módulo de curto-circuito
+        data: Dicionário com os parâmetros do transformador e do curto-circuito
     
     Returns:
         Dicionário com os resultados dos esforços mecânicos calculados
     """
     # Parâmetros necessários
-    raio_medio = module_inputs.get("raio_medio", 0.3)  # metros
-    altura_enrolamento = module_inputs.get("altura_enrolamento", 1.0)  # metros
-    espessura_enrolamento = module_inputs.get("espessura_enrolamento", 0.05)  # metros
-    numero_espiras = module_inputs.get("numero_espiras", 100)
+    raio_medio = data.get("raio_medio", 0.3)  # metros
+    altura_enrolamento = data.get("altura_enrolamento", 1.0)  # metros
+    espessura_enrolamento = data.get("espessura_enrolamento", 0.05)  # metros
+    numero_espiras = data.get("numero_espiras", 100)
     
     # Correntes de curto-circuito assimétrica calculadas previamente
-    asym_currents = calculate_asymmetric_short_circuit_current(basic_data, module_inputs)
+    asym_currents = calculate_asymmetric_short_circuit_current(data)
     i_cc_asym_at = asym_currents["i_cc_asym_at"]
     i_cc_asym_bt = asym_currents["i_cc_asym_bt"]
     # i_cc_asym_ter = asym_currents["i_cc_asym_ter"] # Não utilizado no modelo original
@@ -295,37 +319,37 @@ def calculate_mechanical_forces(basic_data: Dict[str, Any], module_inputs: Dict[
     }
 
 
-def calculate_short_circuit_analysis(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, Any]:
+def calculate_short_circuit_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Realiza a análise completa de curto-circuito para um transformador,
     incluindo o lado terciário onde aplicável e com as simplificações notadas.
     
     Args:
-        basic_data: Dicionário com os parâmetros do transformador e da rede
-        module_inputs: Dicionário com os parâmetros do módulo de curto-circuito
+        data: Dicionário com os parâmetros do transformador e da rede
     
     Returns:
         Dicionário com todos os resultados calculados
     """
     # Cálculos básicos
-    impedances = calculate_impedances(basic_data, module_inputs)
+    nom_currents = calculate_nominal_currents(data)
+    impedances = calculate_impedances(data)
     
     # Cálculos de correntes de curto
-    sym_currents = calculate_symmetric_short_circuit_current(basic_data, module_inputs)
-    asym_currents = calculate_asymmetric_short_circuit_current(basic_data, module_inputs)
+    sym_currents = calculate_symmetric_short_circuit_current(data)
+    asym_currents = calculate_asymmetric_short_circuit_current(data)
     
     # Cálculos de efeitos
-    thermal = calculate_thermal_effects(basic_data, module_inputs)
-    dynamic = calculate_dynamic_forces(basic_data, module_inputs)
-    mechanical = calculate_mechanical_forces(basic_data, module_inputs)
+    thermal = calculate_thermal_effects(data)
+    dynamic = calculate_dynamic_forces(data)
+    mechanical = calculate_mechanical_forces(data)
     
     # Consolida os resultados
     # Consolida os resultados
     results: Dict[str, Any] = {
-        # Correntes nominais (assumindo que já vêm nos dados de entrada)
-        "i_nom_at": basic_data.get("corrente_nominal_at", 0.0),
-        "i_nom_bt": basic_data.get("corrente_nominal_bt", 0.0),
-        "i_nom_ter": basic_data.get("corrente_nominal_terciario", 0.0), # Adicionado terciário
+        # Correntes nominais
+        "i_nom_at": nom_currents["i_nom_at"],
+        "i_nom_bt": nom_currents["i_nom_bt"],
+        "i_nom_ter": nom_currents["i_nom_ter"], # Adicionado terciário
 
         # Impedâncias
         "z_pu": impedances["z_pu"],

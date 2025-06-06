@@ -448,4 +448,328 @@ def calculate_sut_eps_current_compensated(input_data: Dict[str, Any]) -> Dict[st
     # Cálculos de corrente no lado primário (BT) do SUT
     # A documentação em 4.6 usa tensao_ref_dut_kv e corrente_ref_dut_a.
     # Assumindo que tensao_teste é a tensao_ref_dut_kv e a corrente total do DUT no ensaio
-    # precisa ser calculada ou fornecida. Por enquanto, usarei a potencia_aparente_compens
+    # precisa ser calculada ou fornecida. Por enquanto, usarei a potencia_aparente_compensada
+    # e a tensao_teste para estimar a corrente do DUT no lado AT, e então refletir para o BT do SUT.
+    # Isso pode precisar de refinamento com base em como a corrente total do DUT é obtida.
+
+    # Estimar corrente do DUT no lado AT (onde tensao_teste é aplicada)
+    # I_dut_at = (potencia_aparente_compensada * 1000) / (tensao_teste * const.SQRT_3) # Assumindo trifásico e tensao_teste é de linha
+    # A documentação em 4.6 sugere usar corrente_ref_dut_a diretamente.
+    # Vou manter a lógica original que usa a potência aparente compensada e a tensão de teste.
+
+    # Corrente no lado AT do DUT (onde tensao_teste é aplicada)
+    # Assumindo que tensao_teste é a tensão de linha no lado AT do DUT
+    corrente_dut_at = (potencia_aparente_compensada * 1000) / (tensao_teste * const.SQRT_3) if tensao_teste > 0 else 0 # A
+
+    # Relação de transformação do SUT (assumindo SUT_BT_VOLTAGE é a tensão nominal BT do SUT)
+    # A documentação em 4.6 usa V_sut_hv_tap_v / tensao_sut_bt_v.
+    # Assumindo que tensao_teste é a V_sut_hv_tap_v (tensão no lado AT do SUT)
+    # e const.SUT_BT_VOLTAGE é a tensao_sut_bt_v.
+    ratio_sut = (tensao_teste * 1000) / const.SUT_BT_VOLTAGE if const.SUT_BT_VOLTAGE > 0 else 0 # V/V
+
+    # Corrente no lado BT do SUT (Corrente no EPS)
+    # I_sut_lv (A) = I_dut_reflected (A) = corrente_dut_at * ratio_sut
+    # A documentação em 4.6 usa I_exc_dut_lv * ratio_sut para perdas em vazio,
+    # e corrente_ref_dut_a * ratio_sut para perdas em carga.
+    # Usando a corrente do DUT no lado AT (corrente_dut_at) e a relação do SUT.
+    corrente_no_eps = corrente_dut_at * ratio_sut
+
+    # Aplicar fator de correção de capacitância (Cap_Correct_factor_sf/cf) - Seção 4.6
+    # A documentação menciona fatores 0.25, 0.75, 1.0 baseados na tensão nominal do banco.
+    # Esta lógica de seleção de fator não está implementada aqui.
+    # Por enquanto, vou assumir um fator de 1.0 (sem correção).
+    cap_correct_factor = 1.0 # TODO: Implementar lógica de seleção do fator de correção de capacitância
+
+    # Potência reativa corrigida (MVAr) - Seção 4.6
+    # pteste_mvar_corrected_sf (MVAr) = q_power_scenario_sf/cf_mvar * (V_ensaio / V_banco_nominal)^2 * Cap_Correct_factor
+    # Assumindo q_power_scenario_sf/cf_mvar é potencia_banco_cap (kVAR) / 1000
+    # V_ensaio é tensao_teste (kV), V_banco_nominal é cap_bank_voltage_scenario_sf/cf_kv (não disponível aqui)
+    # Esta fórmula parece ser para calcular a potência reativa fornecida pelo banco na tensão de ensaio,
+    # e não para corrigir a corrente no EPS.
+    # A documentação em 4.6 parece misturar conceitos.
+    # Vou manter o cálculo da corrente no EPS baseado na potência aparente compensada, que é mais direto.
+
+    # Percentual do limite de corrente do EPS
+    percentual_limite = (corrente_no_eps / eps_current_limit) * 100 if eps_current_limit > 0 else 100
+
+    return {
+        "corrente_sem_compensacao": round(corrente_dut_at * ratio_sut / (math.sqrt(1 - fator_potencia**2) / fator_potencia) * math.sqrt(1 + (math.sqrt(1 - fator_potencia**2) / fator_potencia)**2), 2) if fator_potencia > 0 else 0, # Estimativa simplificada sem compensação
+        "corrente_compensada": round(corrente_no_eps, 2),
+        "fator_potencia_compensado": round(fp_compensado, 3),
+        "percentual_limite": round(percentual_limite, 2),
+        "status": "OK" if percentual_limite < 100 else "Acima do limite"
+    }
+def analyze_sut_eps_no_load(no_load_results: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Realiza a análise do sistema SUT/EPS para perdas em vazio.
+    """
+    # Extrair dados relevantes dos resultados de perdas em vazio
+    calc_aco = no_load_results.get("calculos_baseados_aço", {})
+    calc_projeto = no_load_results.get("calculos_baseados_projeto", {})
+    params_entrada = no_load_results.get("parametros_entrada", {})
+
+    tensao_bt_kv = params_entrada.get("tensao_bt_kv", 0)
+    tipo_transformador = params_entrada.get("tipo_transformador", "Trifásico")
+    sqrt_3_factor = const.SQRT_3 if tipo_transformador.lower() == "trifásico" else 1.0
+
+    # Potências de ensaio (kVA) - Usar valores de projeto se disponíveis, senão usar calculados com base no aço
+    potencia_ensaio_1pu_kva = calc_projeto.get("potencia_ensaio_1pu_projeto_kva")
+    if potencia_ensaio_1pu_kva is None:
+        potencia_ensaio_1pu_kva = calc_aco.get("potencia_ensaio_1pu_calc_kva", 0)
+
+    potencia_ensaio_1_1pu_kva = calc_projeto.get("potencia_ensaio_1_1pu_projeto_kva")
+    if potencia_ensaio_1_1pu_kva is None:
+        potencia_ensaio_1_1pu_kva = calc_aco.get("potencia_ensaio_1_1pu_calc_kva", 0)
+
+    potencia_ensaio_1_2pu_kva = calc_projeto.get("potencia_ensaio_1_2pu_projeto_kva")
+    if potencia_ensaio_1_2pu_kva is None:
+        potencia_ensaio_1_2pu_kva = calc_aco.get("potencia_ensaio_1_2pu_calc_kva", 0)
+
+    # Correntes de excitação (A) - Usar valores de projeto se disponíveis, senão usar calculados com base no aço
+    corrente_excitacao_1pu_a = calc_projeto.get("corrente_excitacao_projeto_a")
+    if corrente_excitacao_1pu_a is None:
+        corrente_excitacao_1pu_a = calc_aco.get("corrente_excitacao_calc_a", 0)
+
+    corrente_excitacao_1_1pu_a = calc_projeto.get("corrente_excitacao_1_1_projeto_a")
+    if corrente_excitacao_1_1pu_a is None:
+        corrente_excitacao_1_1pu_a = calc_aco.get("corrente_excitacao_1_1_calc_a", 0)
+
+    corrente_excitacao_1_2pu_a = calc_projeto.get("corrente_excitacao_1_2_projeto_a")
+    if corrente_excitacao_1_2pu_a is None:
+        corrente_excitacao_1_2pu_a = calc_aco.get("corrente_excitacao_1_2_calc_a", 0)
+
+    # Tensões de teste (kV)
+    tensao_teste_1_1_kv = params_entrada.get("tensao_bt_kv", 0) * 1.1
+    tensao_teste_1_2_kv = params_entrada.get("tensao_bt_kv", 0) * 1.2
+
+    # Constantes do sistema SUT/EPS
+    sut_bt_voltage_v = const.SUT_BT_VOLTAGE # V
+    eps_current_limit_a = const.EPS_CURRENT_LIMIT # A
+    dut_power_limit_kw = const.DUT_POWER_LIMIT # kW
+
+    # Análise para 1.0 pu
+    # Corrente no lado AT do DUT (onde a tensão de ensaio é aplicada)
+    corrente_dut_at_1pu_a = (potencia_ensaio_1pu_kva * 1000) / (tensao_bt_kv * sqrt_3_factor) if tensao_bt_kv > 0 and sqrt_3_factor > 0 else 0
+
+    # Relação de transformação do SUT
+    ratio_sut_1pu = (tensao_bt_kv * 1000) / sut_bt_voltage_v if sut_bt_voltage_v > 0 else 0
+
+    # Corrente no lado BT do SUT (Corrente no EPS)
+    corrente_no_eps_1pu_a = corrente_dut_at_1pu_a * ratio_sut_1pu
+
+    # Percentual do limite de corrente do EPS
+    percentual_limite_eps_1pu = (corrente_no_eps_1pu_a / eps_current_limit_a) * 100 if eps_current_limit_a > 0 else 100
+
+    # Análise para 1.1 pu
+    corrente_dut_at_1_1pu_a = (potencia_ensaio_1_1pu_kva * 1000) / (tensao_teste_1_1_kv * sqrt_3_factor) if tensao_teste_1_1_kv > 0 and sqrt_3_factor > 0 else 0
+    ratio_sut_1_1pu = (tensao_teste_1_1_kv * 1000) / sut_bt_voltage_v if sut_bt_voltage_v > 0 else 0
+    corrente_no_eps_1_1pu_a = corrente_dut_at_1_1pu_a * ratio_sut_1_1pu
+    percentual_limite_eps_1_1pu = (corrente_no_eps_1_1pu_a / eps_current_limit_a) * 100 if eps_current_limit_a > 0 else 100
+
+    # Análise para 1.2 pu
+    corrente_dut_at_1_2pu_a = (potencia_ensaio_1_2pu_kva * 1000) / (tensao_teste_1_2_kv * sqrt_3_factor) if tensao_teste_1_2_kv > 0 and sqrt_3_factor > 0 else 0
+    ratio_sut_1_2pu = (tensao_teste_1_2_kv * 1000) / sut_bt_voltage_v if sut_bt_voltage_v > 0 else 0
+    corrente_no_eps_1_2pu_a = corrente_dut_at_1_2pu_a * ratio_sut_1_2pu
+    percentual_limite_eps_1_2pu = (corrente_no_eps_1_2pu_a / eps_current_limit_a) * 100 if eps_current_limit_a > 0 else 100
+
+    return {
+        "sut_eps_limits": {
+            "sut_bt_voltage_v": sut_bt_voltage_v,
+            "eps_current_limit_a": eps_current_limit_a,
+            "dut_power_limit_kw": dut_power_limit_kw,
+        },
+        "analysis_1pu": {
+            "potencia_ensaio_kva": round(potencia_ensaio_1pu_kva, 2),
+            "corrente_excitacao_a": round(corrente_excitacao_1pu_a, 2),
+            "corrente_no_eps_a": round(corrente_no_eps_1pu_a, 2),
+            "percentual_limite_eps": round(percentual_limite_eps_1pu, 2),
+            "status": "OK" if percentual_limite_eps_1pu < 100 else "Acima do limite de corrente do EPS"
+        },
+        "analysis_1_1pu": {
+            "tensao_teste_kv": round(tensao_teste_1_1_kv, 2),
+            "potencia_ensaio_kva": round(potencia_ensaio_1_1pu_kva, 2),
+            "corrente_excitacao_a": round(corrente_excitacao_1_1pu_a, 2),
+            "corrente_no_eps_a": round(corrente_no_eps_1_1pu_a, 2),
+            "percentual_limite_eps": round(percentual_limite_eps_1_1pu, 2),
+            "status": "OK" if percentual_limite_eps_1_1pu < 100 else "Acima do limite de corrente do EPS"
+        },
+        "analysis_1_2pu": {
+            "tensao_teste_kv": round(tensao_teste_1_2_kv, 2),
+            "potencia_ensaio_kva": round(potencia_ensaio_1_2pu_kva, 2),
+            "corrente_excitacao_a": round(corrente_excitacao_1_2pu_a, 2),
+            "corrente_no_eps_a": round(corrente_no_eps_1_2pu_a, 2),
+            "percentual_limite_eps": round(percentual_limite_eps_1_2pu, 2),
+            "status": "OK" if percentual_limite_eps_1_2pu < 100 else "Acima do limite de corrente do EPS"
+        }
+    }
+
+
+def analyze_losses(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Realiza análise completa de perdas em vazio e em carga, e realiza a análise do sistema SUT/EPS.
+    """
+    # Prepara dados para análise de perdas em vazio
+    no_load_data = {
+        k: data.get(k) for k in NoLoadLossesInput.__fields__
+    }
+
+    # Prepara dados para análise de perdas em carga
+    load_data = {
+        k: data.get(k) for k in LoadLossesInput.__fields__
+    }
+
+    # Prepara dados para cálculo do banco de capacitores
+    # A documentação em 4.4 sugere usar a componente reativa do DUT (pteste_..._mvar)
+    # como base para o cálculo do banco de capacitores, não a potência ativa.
+    # A função calculate_load_losses precisa ser expandida para calcular pteste_..._mvar
+    # para os diferentes cenários antes de chamar calculate_cap_bank.
+    # Por enquanto, mantendo a chamada original, mas ciente da inconsistência com a documentação.
+    cap_bank_data = {
+        "potencia_ativa": load_data.get("perdas_carga_kw_u_nom", 0), # Inconsistente com documentação 4.4
+        "fator_potencia_atual": 0.7,  # Valor típico sem compensação
+        "fator_potencia_desejado": 0.95  # Objetivo típico após compensação
+    }
+
+    # Executa os cálculos
+    no_load_results = calculate_no_load_losses(no_load_data)
+
+    # Realizar análise SUT/EPS para perdas em vazio
+    sut_eps_no_load_analysis = analyze_sut_eps_no_load(no_load_results)
+
+    # Calcular perdas em carga (se dados de entrada estiverem presentes)
+    load_results = {}
+    if any(load_data.values()): # Verifica se há algum valor nos dados de carga
+         try:
+            load_results = calculate_load_losses(load_data)
+         except Exception as e:
+            log.error(f"Erro ao calcular perdas em carga: {e}")
+            load_results["error"] = f"Erro ao calcular perdas em carga: {e}"
+
+
+    # Prepara dados para análise SUT/EPS com compensação
+    # A documentação em 4.6 sugere usar tensao_ref_dut_kv e corrente_ref_dut_a.
+    # A corrente_ref_dut_a precisa ser calculada nos cenários de perdas em carga.
+    # Por enquanto, mantendo a chamada original, mas ciente da necessidade de refinamento.
+    sut_eps_data = {
+        "potencia_ativa": load_data.get("perdas_carga_kw_u_nom", 0), # Usado para estimar potência aparente
+        "tensao_teste": data.get("tensao_at", 0), # Assumindo que tensao_at é a tensão de ensaio
+        "fator_potencia": 0.7,  # Valor típico sem compensação (antes da compensação)
+        "potencia_banco_cap" : 0 # Inicializar como 0, será atualizado após o cálculo do banco de capacitores
+    }
+
+    # Calcula banco de capacitores (se dados de carga estiverem presentes)
+    cap_bank_results = {}
+    if any(load_data.values()):
+        try:
+            cap_bank_results = calculate_cap_bank(cap_bank_data)
+        except Exception as e:
+            log.error(f"Erro ao calcular banco de capacitores: {e}")
+            cap_bank_results["error"] = f"Erro ao calcular banco de capacitores: {e}"
+
+
+    # Calcula corrente compensada (se dados de carga estiverem presentes)
+    sut_eps_load_analysis = {}
+    if any(load_data.values()):
+        try:
+            # Atualiza sut_eps_data com o resultado do banco de capacitores
+            sut_eps_data["potencia_banco_cap"] = cap_bank_results.get("potencia_banco_capacitores", 0)
+            sut_eps_load_analysis = calculate_sut_eps_current_compensated(sut_eps_data) # TODO: Revisar conforme Seção 4.6
+        except Exception as e:
+            log.error(f"Erro ao calcular análise SUT/EPS em carga: {e}")
+            sut_eps_load_analysis["error"] = f"Erro ao calcular análise SUT/EPS em carga: {e}"
+
+
+    # Combina todos os resultados
+    results = {
+        "perdas_vazio": no_load_results,
+        "analise_sut_eps_vazio": sut_eps_no_load_analysis,
+        "perdas_carga": load_results,
+        "banco_capacitores": cap_bank_results,
+        "analise_sut_eps_carga": sut_eps_load_analysis,
+    }
+
+    return results
+
+
+def calculate_losses(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Realiza análise completa de perdas em vazio e em carga usando dados básicos do transformador
+    e inputs específicos do módulo de perdas.
+    
+    Args:
+        basic_data: Dados básicos do transformador (de transformerInputs.formData)
+        module_inputs: Inputs específicos do formulário de perdas
+        
+    Returns:
+        Dict contendo os resultados de perdas em vazio, perdas em carga, banco de capacitores e análise SUT/EPS
+    """
+    # Construir no_load_input_data usando basic_data e module_inputs
+    no_load_input_data_dict = {
+        "perdas_vazio_ui": module_inputs.get("perdas_vazio_kw"),  # Do form de perdas
+        "peso_nucleo_ui": basic_data.get("peso_parte_ativa"),  # Dos dados básicos (assumindo peso_nucleo = peso_parte_ativa)
+        "corrente_excitacao_ui": module_inputs.get("corrente_excitacao"),  # Do form de perdas
+        "inducao_ui": module_inputs.get("inducao_nucleo"),  # Do form de perdas
+        "corrente_exc_1_1_ui": module_inputs.get("corrente_excitacao_1_1"),
+        "corrente_exc_1_2_ui": module_inputs.get("corrente_excitacao_1_2"),
+        "frequencia": basic_data.get("frequencia"),
+        "tensao_bt_kv": basic_data.get("tensao_bt"),
+        "corrente_nominal_bt": basic_data.get("corrente_nominal_bt"),  # Precisa estar calculado em basic_data
+        "tipo_transformador": basic_data.get("tipo_transformador"),
+        "steel_type": module_inputs.get("steel_type_select", "M4"),  # Assumindo que há um select com id 'steel_type_select'
+        "potencia_mva": basic_data.get("potencia_mva")
+    }
+    
+    # Construir load_input_data usando basic_data e module_inputs
+    load_input_data_dict = {
+        "temperatura_referencia": int(module_inputs.get("temperatura_referencia", 75)),
+        "perdas_carga_kw_u_min": module_inputs.get("perdas_carga_kw_U_min"),
+        "perdas_carga_kw_u_nom": module_inputs.get("perdas_carga_kw_U_nom"),
+        "perdas_carga_kw_u_max": module_inputs.get("perdas_carga_kw_U_max"),
+        "potencia_mva": basic_data.get("potencia_mva"),
+        "impedancia": basic_data.get("impedancia")
+    }
+
+    # Calcular perdas em vazio
+    no_load_results = calculate_no_load_losses(no_load_input_data_dict)
+    
+    # Realizar análise SUT/EPS para perdas em vazio
+    sut_eps_no_load_analysis = analyze_sut_eps_no_load(no_load_results)
+
+    load_results = {}
+    cap_bank_results = {}
+    sut_eps_load_analysis = {}
+
+    # Verificar se os campos obrigatórios para perdas em carga estão presentes
+    required_load_fields = ["perdas_carga_kw_U_min", "perdas_carga_kw_U_nom", "perdas_carga_kw_U_max"]
+    if all(module_inputs.get(field) is not None for field in required_load_fields):
+        try:
+            load_results = calculate_load_losses(load_input_data_dict)
+            
+            # Prepara dados para cálculo do banco de capacitores
+            cap_bank_data = {
+                "potencia_ativa": load_input_data_dict.get("perdas_carga_kw_u_nom", 0),
+                "fator_potencia_atual": 0.7,
+                "fator_potencia_desejado": 0.95
+            }
+            cap_bank_results = calculate_cap_bank(cap_bank_data)
+
+            # Prepara dados para análise SUT/EPS com compensação
+            sut_eps_data = {
+                "potencia_ativa": load_input_data_dict.get("perdas_carga_kw_u_nom", 0),
+                "tensao_teste": basic_data.get("tensao_at", 0),
+                "fator_potencia": 0.7,
+                "potencia_banco_cap": cap_bank_results.get("potencia_banco_capacitores", 0)
+            }
+            sut_eps_load_analysis = calculate_sut_eps_current_compensated(sut_eps_data)
+            
+        except Exception as e:
+            log.error(f"Erro ao calcular perdas em carga: {e}")
+            load_results["error"] = f"Erro ao calcular perdas em carga: {e}"
+
+    return {
+        "perdas_vazio": no_load_results,
+        "analise_sut_eps_vazio": sut_eps_no_load_analysis,
+        "perdas_carga": load_results,
+        "banco_capacitores": cap_bank_results,
+        "analise_sut_eps_carga": sut_eps_load_analysis,
+    }

@@ -45,23 +45,22 @@ except ImportError:
             const = MockConstants()
 
 
-def calculate_oil_temperature_rise(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, float]:
+def calculate_oil_temperature_rise(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calcula a elevação de temperatura do óleo conforme seção 3.1 da documentação.
     
     Args:
-        basic_data: Dicionário com os parâmetros básicos do transformador
-        module_inputs: Dicionário com os parâmetros do módulo de temperatura
+        data: Dicionário com os parâmetros do transformador
         
     Returns:
         Dicionário com os resultados de elevação de temperatura do óleo
     """
     # Extrai parâmetros relevantes
-    perdas_vazio = basic_data.get("perdas_vazio_kw", 0)
-    perdas_carga = basic_data.get("perdas_carga_kw_u_nom", 0)
-    tipo_resfriamento = basic_data.get("tipo_resfriamento", "ONAN")
-    peso_oleo = basic_data.get("peso_oleo", 0)
-    carga_percentual = module_inputs.get("carga_percentual", 100) / 100
+    perdas_vazio = data.get("perdas_vazio_kw", 0)
+    perdas_carga = data.get("perdas_carga_kw_u_nom", 0)
+    tipo_resfriamento = data.get("tipo_resfriamento", "ONAN")
+    peso_oleo = data.get("peso_oleo", 0)
+    carga_percentual = data.get("carga_percentual", 100) / 100
     
     # Determina o expoente n baseado no tipo de resfriamento
     if tipo_resfriamento in ["ONAN", "ONAF"]:
@@ -83,7 +82,7 @@ def calculate_oil_temperature_rise(basic_data: Dict[str, Any], module_inputs: Di
     r_atual = r * (carga_percentual ** 2)
     
     # Elevação de temperatura do óleo em regime permanente (topo)
-    elevacao_nominal = basic_data.get("elevacao_oleo_topo", 55)  # K (valor típico para ONAN)
+    elevacao_nominal = data.get("elevacao_oleo_topo", 55)  # K (valor típico para ONAN)
     elevacao_atual = elevacao_nominal * ((1 + r_atual) / (1 + r)) ** n
     
     # Constante de tempo do óleo (minutos)
@@ -101,22 +100,21 @@ def calculate_oil_temperature_rise(basic_data: Dict[str, Any], module_inputs: Di
     }
 
 
-def calculate_winding_temperature_rise(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, float]:
+def calculate_winding_temperature_rise(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calcula a elevação de temperatura dos enrolamentos conforme seção 3.2 da documentação.
     
     Args:
-        basic_data: Dicionário com os parâmetros básicos do transformador
-        module_inputs: Dicionário com os parâmetros do módulo de temperatura
+        data: Dicionário com os parâmetros do transformador
         
     Returns:
         Dicionário com os resultados de elevação de temperatura dos enrolamentos
     """
     # Extrai parâmetros relevantes
-    perdas_carga = basic_data.get("perdas_carga_kw_u_nom", 0)
-    tipo_resfriamento = basic_data.get("tipo_resfriamento", "ONAN")
-    peso_enrolamentos = basic_data.get("peso_enrolamentos", 0)
-    carga_percentual = module_inputs.get("carga_percentual", 100) / 100
+    perdas_carga = data.get("perdas_carga_kw_u_nom", 0)
+    tipo_resfriamento = data.get("tipo_resfriamento", "ONAN")
+    peso_enrolamentos = data.get("peso_enrolamentos", 0)
+    carga_percentual = data.get("carga_percentual", 100) / 100
     
     # Determina o expoente m baseado no tipo de resfriamento
     if tipo_resfriamento in ["ONAN"]:
@@ -131,12 +129,12 @@ def calculate_winding_temperature_rise(basic_data: Dict[str, Any], module_inputs
     perdas_enrol_atual = perdas_enrol_nominal * (carga_percentual ** 2)
     
     # Gradiente de temperatura entre enrolamento e óleo
-    g_nominal = basic_data.get("elevacao_enrol", 65) - basic_data.get("elevacao_oleo_topo", 55)  # K
+    g_nominal = data.get("elevacao_enrol", 65) - data.get("elevacao_oleo_topo", 55)  # K
     g_atual = g_nominal * (carga_percentual ** (2 * m))
     
     # Elevação de temperatura do óleo (do cálculo anterior)
-    oleo = calculate_oil_temperature_rise(basic_data, module_inputs)
-    elevacao_oleo_atual = oleo["elevacao_oleo_atual"]
+    elevacao_oleo = calculate_oil_temperature_rise(data)
+    elevacao_oleo_atual = elevacao_oleo["elevacao_oleo_atual"]
     
     # Elevação de temperatura dos enrolamentos em relação à ambiente
     elevacao_enrol_atual = elevacao_oleo_atual + g_atual
@@ -155,13 +153,12 @@ def calculate_winding_temperature_rise(basic_data: Dict[str, Any], module_inputs
     }
 
 
-def calculate_temperature_time_curve(basic_data: Dict[str, Any], module_inputs: Dict[str, Any], tempo_total: float = 480, intervalo: float = 10) -> Dict[str, Any]:
+def calculate_temperature_time_curve(data: Dict[str, Any], tempo_total: float = 480, intervalo: float = 10) -> Dict[str, Any]:
     """
     Calcula a curva de temperatura ao longo do tempo conforme seção 2.2 da documentação.
     
     Args:
-        basic_data: Dicionário com os parâmetros básicos do transformador
-        module_inputs: Dicionário com os parâmetros do módulo de temperatura
+        data: Dicionário com os parâmetros do transformador
         tempo_total: Tempo total da simulação em minutos
         intervalo: Intervalo entre pontos em minutos
         
@@ -169,25 +166,23 @@ def calculate_temperature_time_curve(basic_data: Dict[str, Any], module_inputs: 
         Dicionário com os arrays de tempo e temperaturas calculadas
     """
     # Extrai parâmetros relevantes
-    temp_ambiente = module_inputs.get("temp_ambiente", const.TEMP_AMBIENTE_REFERENCIA)
-    carga_inicial_pct = module_inputs.get("carga_inicial_pct", 0) / 100
-    carga_final_pct = module_inputs.get("carga_percentual", 100) / 100
+    temp_ambiente = data.get("temp_ambiente", const.TEMP_AMBIENTE_REFERENCIA)
+    carga_inicial_pct = data.get("carga_inicial_pct", 0) / 100
+    carga_final_pct = data.get("carga_percentual", 100) / 100
     
     # Cria dados temporários para os cálculos iniciais
-    data_inicial = basic_data.copy()
-    module_inputs_inicial = module_inputs.copy()
-    module_inputs_inicial["carga_percentual"] = carga_inicial_pct * 100
+    data_inicial = data.copy()
+    data_inicial["carga_percentual"] = carga_inicial_pct * 100
     
     # Calcula elevações de temperatura para estado inicial e final
-    oleo_inicial = calculate_oil_temperature_rise(basic_data, module_inputs_inicial)
-    enrol_inicial = calculate_winding_temperature_rise(basic_data, module_inputs_inicial)
+    oleo_inicial = calculate_oil_temperature_rise(data_inicial)
+    enrol_inicial = calculate_winding_temperature_rise(data_inicial)
     
-    data_final = basic_data.copy()
-    module_inputs_final = module_inputs.copy()
-    module_inputs_final["carga_percentual"] = carga_final_pct * 100
+    data_final = data.copy()
+    data_final["carga_percentual"] = carga_final_pct * 100
     
-    oleo_final = calculate_oil_temperature_rise(basic_data, module_inputs_final)
-    enrol_final = calculate_winding_temperature_rise(basic_data, module_inputs_final)
+    oleo_final = calculate_oil_temperature_rise(data_final)
+    enrol_final = calculate_winding_temperature_rise(data_final)
     
     # Constantes de tempo
     tau_oleo = oleo_final["constante_tempo_oleo"]
@@ -222,24 +217,23 @@ def calculate_temperature_time_curve(basic_data: Dict[str, Any], module_inputs: 
     }
 
 
-def calculate_temperature_analysis(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, Any]:
+def calculate_temperature_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Realiza a análise completa de elevação de temperatura para um transformador.
     
     Args:
-        basic_data: Dicionário com os parâmetros básicos do transformador
-        module_inputs: Dicionário com os parâmetros do módulo de temperatura
+        data: Dicionário com os parâmetros do transformador
         
     Returns:
         Dicionário com todos os resultados calculados
     """
     # Extrai parâmetros relevantes
-    temp_ambiente = module_inputs.get("temp_ambiente", const.TEMP_AMBIENTE_REFERENCIA)
-    tipo_resfriamento = basic_data.get("tipo_resfriamento", "ONAN") # Extrair tipo_resfriamento aqui
+    temp_ambiente = data.get("temp_ambiente", const.TEMP_AMBIENTE_REFERENCIA)
+    tipo_resfriamento = data.get("tipo_resfriamento", "ONAN") # Extrair tipo_resfriamento aqui
 
     # Cálculos de elevação de temperatura
-    oleo = calculate_oil_temperature_rise(basic_data, module_inputs)
-    enrol = calculate_winding_temperature_rise(basic_data, module_inputs)
+    oleo = calculate_oil_temperature_rise(data)
+    enrol = calculate_winding_temperature_rise(data)
 
     # Temperatura ambiente de referência (já extraída acima)
     # temp_ambiente = data.get("temp_ambiente", const.TEMP_AMBIENTE_REFERENCIA)
@@ -249,12 +243,11 @@ def calculate_temperature_analysis(basic_data: Dict[str, Any], module_inputs: Di
     temp_enrol = temp_ambiente + enrol["elevacao_enrol_atual"]
     
     # Calculando o hot-spot (ponto mais quente)
-    fator_hot_spot = module_inputs.get("fator_hot_spot", 1.1)
-    g_atual = enrol["gradiente_atual"]
-    temp_hot_spot = temp_ambiente + oleo["elevacao_oleo_atual"] + (fator_hot_spot * g_atual)
+    fator_hot_spot = data.get("fator_hot_spot", 1.1)
+    temp_hot_spot = temp_ambiente + oleo["elevacao_oleo_atual"] + (fator_hot_spot * enrol["gradiente_atual"])
     
     # Calcular curva de temperatura
-    curva_temp = calculate_temperature_time_curve(basic_data, module_inputs)
+    curva_temp = calculate_temperature_time_curve(data)
     
     # Consolida os resultados
     results = {
@@ -284,7 +277,7 @@ def calculate_temperature_analysis(basic_data: Dict[str, Any], module_inputs: Di
 
     # 4. Cálculos de Capacidade de Sobrecarga (Seção 4)
     # Definir elevação máxima permitida do óleo (placeholder - precisa ser definido com base em normas/dados específicos)
-    delta_theta_oleo_max_permitida = module_inputs.get("elevacao_oleo_max_permitida", 65.0) # Exemplo: 65K
+    delta_theta_oleo_max_permitida = data.get("elevacao_oleo_max_permitida", 65.0) # Exemplo: 65K
 
     # 4.1. Fator de Carga Máximo em Regime Permanente
     # K_max = √((Δθ_oleo_max / Δθ_oleo_nominal)^(1/n))
@@ -312,8 +305,8 @@ def calculate_temperature_analysis(basic_data: Dict[str, Any], module_inputs: Di
     # 5.1. Capacidade de Dissipação de Calor
     # P_dissipacao = K * Δθ_oleo_topo
     # K = P_total_nominal / Δθ_oleo_nominal
-    perdas_vazio = basic_data.get("perdas_vazio_kw", 0)
-    perdas_carga = basic_data.get("perdas_carga_kw_u_nom", 0)
+    perdas_vazio = data.get("perdas_vazio_kw", 0)
+    perdas_carga = data.get("perdas_carga_kw_u_nom", 0)
     perdas_totais_nominal = perdas_vazio + perdas_carga
     coef_transferencia_calor = perdas_totais_nominal / elevacao_oleo_nominal if elevacao_oleo_nominal > const.EPSILON else 0
     capacidade_dissipacao_calor = coef_transferencia_calor * oleo["elevacao_oleo_atual"] # Usando elevação atual para dissipação atual
@@ -321,7 +314,7 @@ def calculate_temperature_analysis(basic_data: Dict[str, Any], module_inputs: Di
     # 5.2. Eficiência do Sistema de Resfriamento
     # η_resfriamento = P_dissipacao / P_total
     # P_total é a potência total de perdas atual
-    perdas_totais_atual = basic_data.get("perdas_vazio_kw", 0) + (basic_data.get("perdas_carga_kw_u_nom", 0) * (module_inputs.get("carga_percentual", 100) / 100)**2)
+    perdas_totais_atual = data.get("perdas_vazio_kw", 0) + (data.get("perdas_carga_kw_u_nom", 0) * (data.get("carga_percentual", 100) / 100)**2)
     eficiencia_resfriamento = capacidade_dissipacao_calor / perdas_totais_atual if perdas_totais_atual > const.EPSILON else 0
 
 
@@ -335,7 +328,7 @@ def calculate_temperature_analysis(basic_data: Dict[str, Any], module_inputs: Di
     }
     # 6.2. Considerações Especiais (Baseado na Seção 6.2 e inputs)
     recomendacoes["consideracoes_especiais"] = {
-        "altitude": f"Altitude de instalação: {basic_data.get('altitude', 'Não informado')}m. Considerar correção na capacidade de resfriamento.",
+        "altitude": f"Altitude de instalação: {data.get('altitude', 'Não informado')}m. Considerar correção na capacidade de resfriamento.",
         "temperatura_ambiente": f"Temperatura ambiente de referência: {temp_ambiente}°C. Considerar variações.",
         "ciclo_carga": f"Tipo de resfriamento: {tipo_resfriamento}. Otimizar para o ciclo de carga específico.",
     }
@@ -357,3 +350,20 @@ def calculate_temperature_analysis(basic_data: Dict[str, Any], module_inputs: Di
 
 
     return results
+
+
+def calculate_aging_factor(temp_hot_spot: float) -> float:
+    """
+    Calcula o fator de envelhecimento conforme IEC 60076-7.
+    
+    Args:
+        temp_hot_spot: Temperatura do ponto mais quente em °C
+        
+    Returns:
+        Fator de envelhecimento
+    """
+    # Constantes para papel termoestabilizado
+    if temp_hot_spot <= 110:
+        return math.exp((15000 / 383) - (15000 / (temp_hot_spot + 273)))
+    else:
+        return 1.0
