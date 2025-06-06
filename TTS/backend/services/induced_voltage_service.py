@@ -118,27 +118,28 @@ def interpolate_table_data(table_name: str, induction: float, frequency: float) 
     return p
 
 
-def calculate_induced_voltage_test(data: Dict[str, Any]) -> Dict[str, Any]:
+def calculate_induced_voltage(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calcula os parâmetros do teste de tensão induzida com base nos dados do transformador.
 
     Args:
-        data: Dicionário com os parâmetros de entrada
+        basic_data: Dicionário com os parâmetros de entrada do transformer_inputs
+        module_inputs: Dicionário com os parâmetros de entrada do módulo de tensão induzida
 
     Returns:
         Dicionário com os resultados calculados para o teste de tensão induzida
     """
     # Extrai parâmetros de entrada (conforme Seção 1 da documentação)
-    tipo_transformador = data.get("tipo_transformador", "Trifásico")
-    tensao_at = data.get("tensao_at", 0)
-    tensao_bt = data.get("tensao_bt", 0)
-    freq_nominal = data.get("freq_nominal", 60)
-    freq_teste = data.get("freq_teste", 120)
-    tensao_prova = data.get("tensao_prova", 0) # Tensão de ensaio induzida informada em dados básicos
-    capacitancia = data.get("capacitancia", 0) # Capacitância AT-GND em pF
-    inducao_nominal = data.get("inducao_nominal", 1.7) # T
-    peso_nucleo_ton = data.get("peso_nucleo", 0) # Toneladas
-    perdas_vazio = data.get("perdas_vazio", 0) # kW
+    tipo_transformador = basic_data.get("tipo_transformador", "Trifásico")
+    tensao_at = basic_data.get("tensao_at", 0)
+    tensao_bt = basic_data.get("tensao_bt", 0)
+    freq_nominal = basic_data.get("freq_nominal", 60)
+    freq_teste = module_inputs.get("freq_teste", 120)
+    tensao_prova = basic_data.get("tensao_prova", 0) # Tensão de ensaio induzida informada em dados básicos
+    capacitancia = module_inputs.get("capacitancia", 0) # Capacitância AT-GND em pF
+    inducao_nominal = basic_data.get("inducao_nominal", 1.7) # T
+    peso_nucleo_ton = basic_data.get("peso_nucleo", 0) # Toneladas
+    perdas_vazio = basic_data.get("perdas_vazio", 0) # kW
 
     # Converte peso do núcleo para kg
     peso_nucleo_kg = peso_nucleo_ton * 1000

@@ -115,14 +115,28 @@ class DataStore {
                 this.cache = updatedData; // Atualiza cache local
                 console.log(`[DataStore:${this.storeId}] updateData: Dados salvos no localStorage`, updatedData);
             } else {
-                console.log(`[DataStore:${this.storeId}] updateData: Enviando para backend em ${this.apiSystem.baseURL}/stores/${this.storeId}`);
-                const response = await fetch(`${this.apiSystem.baseURL}/stores/${this.storeId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(newData)
-                });
+                let response;
+                if (this.storeId === 'transformerInputs') {
+                    // Caso especial para transformerInputs: POST para /api/transformer/inputs
+                    console.log(`[DataStore:${this.storeId}] updateData: Enviando POST para /api/transformer/inputs`);
+                    response = await fetch(`${this.apiSystem.baseURL.replace('/api/data', '/api/transformer')}/inputs`, {
+                        method: 'POST', // Usar POST conforme o fluxo
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(newData.formData) // Enviar apenas formData, pois o backend espera isso
+                    });
+                } else {
+                    // Comportamento padrão: PATCH para /api/data/stores/{storeId}
+                    console.log(`[DataStore:${this.storeId}] updateData: Enviando PATCH para backend em ${this.apiSystem.baseURL}/stores/${this.storeId}`);
+                    response = await fetch(`${this.apiSystem.baseURL}/stores/${this.storeId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(newData)
+                    });
+                }
 
                 if (response.ok) {
                     this.cache = await response.json(); // Atualiza cache com resposta do backend
@@ -308,7 +322,12 @@ function collectFormData(formElement) {
                     formData[input.name] = input.value;
                 }
             } else {
-                formData[input.id] = input.value;
+                // Converte strings vazias para null para campos numéricos
+                if (input.type === 'number' && input.value === '') {
+                    formData[input.id] = null;
+                } else {
+                    formData[input.id] = input.value;
+                }
             }
         }
     });

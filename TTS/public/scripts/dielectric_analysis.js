@@ -1,7 +1,23 @@
 // public/scripts/dielectric_analysis.js - ATUALIZADO (Combinado com abas)
 
 import { loadAndPopulateTransformerInfo, transformerDataStore } from './common_module.js';
-import { collectFormData, fillFormWithData, setupApiFormPersistence } from './api_persistence.js';
+import { collectFormData, fillFormWithData, setupApiFormPersistence, waitForApiSystem } from './api_persistence.js';
+
+// Função auxiliar para obter dados básicos do transformador
+async function getTransformerBasicData() {
+    try {
+        const store = window.apiDataSystem.getStore('transformerInputs');
+        const data = await store.getData();
+        
+        if (data && data.formData) {
+            return data.formData;
+        }
+        return {};
+    } catch (error) {
+        console.error('[dielectric_analysis] Erro ao obter dados básicos do transformador:', error);
+        return {};
+    }
+}
 
 // Função para carregar dados do store 'dielectricAnalysis' e preencher o formulário
 async function loadDielectricDataAndPopulateForm() {
@@ -28,6 +44,135 @@ async function loadDielectricDataAndPopulateForm() {
     }
 }
 
+// Função para configurar o botão Calculate
+async function setupCalcButton() {
+    const calcBtn = document.getElementById('calc-dielectric-btn');
+    if (calcBtn) {
+        calcBtn.addEventListener('click', async function() {
+            console.log('[dielectric_analysis] Botão Calcular clicado!');
+            
+            try {
+                // Mostrar feedback de carregamento
+                const resultsDiv = document.getElementById('dielectric-calc-results');
+                const errorDiv = document.getElementById('dielectric-calc-error');
+                resultsDiv.innerHTML = '<div class="text-center text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Calculando...</div>';
+                errorDiv.textContent = '';
+
+                // Coletar dados do formulário
+                const formElement = document.getElementById('dielectric-analysis-form');
+                if (!formElement) {
+                    throw new Error('Formulário de análise dielétrica não encontrado');
+                }
+                
+                const moduleData = collectFormData(formElement);
+                console.log('[dielectric_analysis] Dados do módulo coletados:', moduleData);
+
+                // Obter dados básicos do transformador
+                const basicData = await getTransformerBasicData();
+                console.log('[dielectric_analysis] Dados básicos do transformador:', basicData);
+
+                // Validar dados essenciais
+                if (!basicData.potencia_mva || !basicData.tensao_at || !basicData.tensao_bt) {
+                    throw new Error('Dados básicos do transformador incompletos. Verifique a página "Dados Básicos".');
+                }
+
+                // Preparar dados para envio
+                const requestData = {
+                    basicData: basicData,
+                    moduleData: moduleData
+                };
+
+                console.log('[dielectric_analysis] Enviando dados para backend:', requestData);
+
+                // Fazer requisição para o backend
+                const response = await fetch('/api/transformer/modules/dielectricAnalysis/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Erro na requisição: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('[dielectric_analysis] Resultado do backend:', result);
+
+                // Exibir resultados
+                displayCalculationResults(result);
+
+            } catch (error) {
+                console.error('[dielectric_analysis] Erro no cálculo:', error);
+                const errorDiv = document.getElementById('dielectric-calc-error');
+                errorDiv.textContent = `Erro: ${error.message}`;
+                
+                const resultsDiv = document.getElementById('dielectric-calc-results');
+                resultsDiv.innerHTML = '';
+            }
+        });
+    }
+}
+
+// Função para exibir os resultados do cálculo
+function displayCalculationResults(result) {
+    const resultsDiv = document.getElementById('dielectric-calc-results');
+    
+    if (!result || !result.data) {
+        resultsDiv.innerHTML = '<div class="text-warning">Nenhum resultado retornado pelo servidor.</div>';
+        return;
+    }
+
+    // Construir HTML dos resultados
+    let resultsHtml = '<div class="card mt-2"><div class="card-header bg-primary text-white"><h6 class="mb-0">Resultados da Análise Dielétrica</h6></div><div class="card-body">';
+    
+    const data = result.data;
+    
+    // Resultados AT
+    if (data.at) {
+        resultsHtml += '<div class="mb-3"><h6 class="text-primary">Alta Tensão (AT)</h6>';
+        if (data.at.nivel_isolamento) resultsHtml += `<p><strong>Nível de Isolamento:</strong> ${data.at.nivel_isolamento}</p>`;
+        if (data.at.tensao_ensaio_frequencia_industrial) resultsHtml += `<p><strong>Tensão de Ensaio (60Hz):</strong> ${data.at.tensao_ensaio_frequencia_industrial} kV</p>`;
+        if (data.at.tensao_suportabilidade_impulso) resultsHtml += `<p><strong>NBI:</strong> ${data.at.tensao_suportabilidade_impulso} kV</p>`;
+        if (data.at.status) resultsHtml += `<p><strong>Status:</strong> <span class="${data.at.status === 'APROVADO' ? 'text-success' : 'text-danger'}">${data.at.status}</span></p>`;
+        resultsHtml += '</div>';
+    }
+    
+    // Resultados BT
+    if (data.bt) {
+        resultsHtml += '<div class="mb-3"><h6 class="text-info">Baixa Tensão (BT)</h6>';
+        if (data.bt.nivel_isolamento) resultsHtml += `<p><strong>Nível de Isolamento:</strong> ${data.bt.nivel_isolamento}</p>`;
+        if (data.bt.tensao_ensaio_frequencia_industrial) resultsHtml += `<p><strong>Tensão de Ensaio (60Hz):</strong> ${data.bt.tensao_ensaio_frequencia_industrial} kV</p>`;
+        if (data.bt.tensao_suportabilidade_impulso) resultsHtml += `<p><strong>NBI:</strong> ${data.bt.tensao_suportabilidade_impulso} kV</p>`;
+        if (data.bt.status) resultsHtml += `<p><strong>Status:</strong> <span class="${data.bt.status === 'APROVADO' ? 'text-success' : 'text-danger'}">${data.bt.status}</span></p>`;
+        resultsHtml += '</div>';
+    }
+
+    // Resultados Terciário
+    if (data.terciario) {
+        resultsHtml += '<div class="mb-3"><h6 class="text-warning">Terciário</h6>';
+        if (data.terciario.nivel_isolamento) resultsHtml += `<p><strong>Nível de Isolamento:</strong> ${data.terciario.nivel_isolamento}</p>`;
+        if (data.terciario.tensao_ensaio_frequencia_industrial) resultsHtml += `<p><strong>Tensão de Ensaio (60Hz):</strong> ${data.terciario.tensao_ensaio_frequencia_industrial} kV</p>`;
+        if (data.terciario.tensao_suportabilidade_impulso) resultsHtml += `<p><strong>NBI:</strong> ${data.terciario.tensao_suportabilidade_impulso} kV</p>`;
+        if (data.terciario.status) resultsHtml += `<p><strong>Status:</strong> <span class="${data.terciario.status === 'APROVADO' ? 'text-success' : 'text-danger'}">${data.terciario.status}</span></p>`;
+        resultsHtml += '</div>';
+    }
+
+    // Resumo geral
+    if (data.resumo) {
+        resultsHtml += '<div class="alert alert-info"><h6>Resumo</h6>';
+        if (data.resumo.status_geral) resultsHtml += `<p><strong>Status Geral:</strong> <span class="${data.resumo.status_geral === 'APROVADO' ? 'text-success' : 'text-danger'}">${data.resumo.status_geral}</span></p>`;
+        if (data.resumo.observacoes) resultsHtml += `<p><strong>Observações:</strong> ${data.resumo.observacoes}</p>`;
+        resultsHtml += '</div>';
+    }
+
+    resultsHtml += '</div></div>';
+    
+    resultsDiv.innerHTML = resultsHtml;
+}
+
 // Função de inicialização do módulo Análise Dielétrica
 async function initDielectricAnalysis() {
     console.log('Módulo Análise Dielétrica (com abas) carregado e pronto para interatividade.');
@@ -47,6 +192,9 @@ async function initDielectricAnalysis() {
 
     // Carregar e preencher os dados do próprio módulo de análise dielétrica
     await loadDielectricDataAndPopulateForm();
+
+    // Configurar o botão Calculate
+    await setupCalcButton();
 
     // Adicionar listener para o evento transformerDataUpdated
     document.addEventListener('transformerDataUpdated', async (event) => {

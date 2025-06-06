@@ -3,6 +3,27 @@
 import { loadAndPopulateTransformerInfo } from './common_module.js';
 import { collectFormData, fillFormWithData } from './api_persistence.js';
 
+// Função para aguardar o sistema de persistência estar pronto
+async function waitForApiSystem() {
+    return new Promise((resolve) => {
+        if (window.apiDataSystem) {
+            resolve();
+        } else {
+            const checkInterval = setInterval(() => {
+                if (window.apiDataSystem) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+            // Timeout após 10 segundos
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                resolve();
+            }, 10000);
+        }
+    });
+}
+
 // Função para carregar dados do store 'losses' e preencher o formulário
 async function loadLossesDataAndPopulateForm() {
     try {
@@ -226,6 +247,7 @@ async function initLosses() {
             // Adiciona um pequeno atraso para garantir que os elementos estejam no DOM
             setTimeout(() => {
                 setupNumericSpinners(); // Re-run the setup for all spinners
+                setupCalculateButtons(); // Re-run the setup for calculate buttons
             }, 500); // Atraso aumentado para 500ms
         }
     });
@@ -233,7 +255,11 @@ async function initLosses() {
     // --- Initial Setup and Observer Registration ---
     // Run `setupNumericSpinners` once when the script first loads to attach listeners to initial elements.
     console.log('[losses] Chamando setupNumericSpinners inicial');
-    setupNumericSpinners();    // Start observing the element that contains the tab content.
+    setupNumericSpinners();
+    
+    // Setup Calculate Buttons
+    console.log('[losses] Configurando botões de cálculo');
+    setupCalculateButtons();    // Start observing the element that contains the tab content.
     // The `losses-tabs` ID is from your `layouts/losses.py` (dbc.Tabs component).
     // This component's children (the `dbc.Tab`s) will have their content updated dynamically.
     const tabContentContainer = document.getElementById('lossesTabContent');
@@ -267,3 +293,443 @@ document.addEventListener('DOMContentLoaded', () => {
         initLosses();
     }
 });
+
+// --- Calculate Button Setup ---
+// Implementa os botões "Calcular" para perdas em vazio e perdas em carga
+function setupCalculateButtons() {
+    console.log('[losses] Configurando botões de cálculo');
+    
+    // Botão Calcular Perdas em Vazio
+    const calcularVazioBtn = document.getElementById('calcular-perdas-vazio');
+    if (calcularVazioBtn) {
+        calcularVazioBtn.removeEventListener('click', handleCalculateNoLoad);
+        calcularVazioBtn.addEventListener('click', handleCalculateNoLoad);
+        console.log('[losses] Botão calcular-perdas-vazio configurado');
+    }
+    
+    // Botão Calcular Perdas em Carga
+    const calcularCargaBtn = document.getElementById('calcular-perdas-carga');
+    if (calcularCargaBtn) {
+        calcularCargaBtn.removeEventListener('click', handleCalculateLoad);
+        calcularCargaBtn.addEventListener('click', handleCalculateLoad);
+        console.log('[losses] Botão calcular-perdas-carga configurado');
+    }
+}
+
+// Função para lidar com o cálculo de perdas em vazio
+async function handleCalculateNoLoad() {
+    console.log('[losses] Calculando perdas em vazio...');
+    
+    try {
+        // Exibir indicador de carregamento
+        showCalculationLoading('perdas-vazio');
+        
+        // Coletar dados básicos do transformador
+        const basicData = await getBasicTransformerData();
+        if (!basicData) {
+            throw new Error('Dados básicos do transformador não encontrados');
+        }
+        
+        // Coletar dados do módulo de perdas em vazio
+        const noLoadInputs = collectNoLoadInputs();            // Fazer requisição para a API
+            const response = await fetch('/api/transformer/modules/losses/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    },
+                body: JSON.stringify({
+                    basicData: basicData,
+                    moduleData: noLoadInputs
+                })
+            });
+        
+        if (!response.ok) {
+            throw new Error(`Erro na API: ${response.status} - ${response.statusText}`);
+        }
+        
+        const results = await response.json();
+        
+        // Exibir resultados
+        displayNoLoadResults(results);
+        
+        console.log('[losses] Cálculo de perdas em vazio concluído:', results);
+        
+    } catch (error) {
+        console.error('[losses] Erro ao calcular perdas em vazio:', error);
+        showCalculationError('perdas-vazio', error.message);
+    }
+}
+
+// Função para lidar com o cálculo de perdas em carga
+async function handleCalculateLoad() {
+    console.log('[losses] Calculando perdas em carga...');
+    
+    try {
+        // Exibir indicador de carregamento
+        showCalculationLoading('perdas-carga');
+        
+        // Coletar dados básicos do transformador
+        const basicData = await getBasicTransformerData();
+        if (!basicData) {
+            throw new Error('Dados básicos do transformador não encontrados');
+        }
+        
+        // Coletar dados do módulo de perdas em carga
+        const loadInputs = collectLoadInputs();
+        
+        // Verificar se os campos obrigatórios estão preenchidos
+        const requiredFields = ['perdas_carga_kw_U_min', 'perdas_carga_kw_U_nom', 'perdas_carga_kw_U_max'];
+        const missingFields = requiredFields.filter(field => !loadInputs[field]);
+        
+        if (missingFields.length > 0) {
+            throw new Error(`Campos obrigatórios não preenchidos: ${missingFields.join(', ')}`);
+        }            // Fazer requisição para a API
+            const response = await fetch('/api/transformer/modules/losses/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    },
+                body: JSON.stringify({
+                    basicData: basicData,
+                    moduleData: { ...collectNoLoadInputs(), ...loadInputs }
+                })
+            });
+        
+        if (!response.ok) {
+            throw new Error(`Erro na API: ${response.status} - ${response.statusText}`);
+        }
+        
+        const results = await response.json();
+        
+        // Exibir resultados
+        displayLoadResults(results);
+        
+        console.log('[losses] Cálculo de perdas em carga concluído:', results);
+        
+    } catch (error) {
+        console.error('[losses] Erro ao calcular perdas em carga:', error);
+        showCalculationError('perdas-carga', error.message);
+    }
+}
+
+// Função para coletar dados básicos do transformador
+async function getBasicTransformerData() {
+    try {
+        if (!window.apiDataSystem) {
+            throw new Error('Sistema de persistência não disponível');
+        }
+        
+        const store = window.apiDataSystem.getStore('transformerInputs');
+        const data = await store.getData();
+        
+        if (!data || !data.formData) {
+            throw new Error('Dados do transformador não encontrados');
+        }
+        
+        return data.formData;
+    } catch (error) {
+        console.error('[losses] Erro ao obter dados básicos:', error);
+        return null;
+    }
+}
+
+// Função para coletar dados de entrada de perdas em vazio
+function collectNoLoadInputs() {
+    return {
+        perdas_vazio_kw: document.getElementById('perdas-vazio-kw')?.value || '',
+        peso_projeto_Ton: document.getElementById('peso-projeto-Ton')?.value || '',
+        corrente_excitacao: document.getElementById('corrente-excitacao')?.value || '',
+        inducao_nucleo: document.getElementById('inducao-nucleo')?.value || '',
+        corrente_excitacao_1_1: document.getElementById('corrente-excitacao-1-1')?.value || '',
+        corrente_excitacao_1_2: document.getElementById('corrente-excitacao-1-2')?.value || '',
+        tipo_aco: document.getElementById('tipo-aco')?.value || 'M4'
+    };
+}
+
+// Função para coletar dados de entrada de perdas em carga
+function collectLoadInputs() {
+    return {
+        temperatura_referencia: document.getElementById('temperatura-referencia')?.value || '75',
+        perdas_carga_kw_U_min: document.getElementById('perdas-carga-kw_U_min')?.value || '',
+        perdas_carga_kw_U_nom: document.getElementById('perdas-carga-kw_U_nom')?.value || '',
+        perdas_carga_kw_U_max: document.getElementById('perdas-carga-kw_U_max')?.value || ''
+    };
+}
+
+// Função para exibir indicador de carregamento
+function showCalculationLoading(calculationType) {
+    const loadingHtml = `
+        <div class="d-flex align-items-center justify-content-center">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                <span class="visually-hidden">Calculando...</span>
+            </div>
+            <span class="text-primary">Calculando...</span>
+        </div>
+    `;
+    
+    if (calculationType === 'perdas-vazio') {
+        const containers = [
+            'parametros-gerais-card-body',
+            'dut-voltage-level-results-body',
+            'sut-analysis-results-area'
+        ];
+        containers.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.innerHTML = loadingHtml;
+        });
+    } else if (calculationType === 'perdas-carga') {
+        const containers = [
+            'condicoes-nominais-card-body',
+            'resultados-perdas-carga'
+        ];
+        containers.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.innerHTML = loadingHtml;
+        });
+    }
+}
+
+// Função para exibir erro de cálculo
+function showCalculationError(calculationType, errorMessage) {
+    const errorHtml = `
+        <div class="alert alert-danger mb-0" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <small>Erro: ${errorMessage}</small>
+        </div>
+    `;
+    
+    if (calculationType === 'perdas-vazio') {
+        const containers = [
+            'parametros-gerais-card-body',
+            'dut-voltage-level-results-body',
+            'sut-analysis-results-area'
+        ];
+        containers.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.innerHTML = errorHtml;
+        });
+    } else if (calculationType === 'perdas-carga') {
+        const containers = [
+            'condicoes-nominais-card-body',
+            'resultados-perdas-carga'
+        ];
+        containers.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.innerHTML = errorHtml;
+        });
+    }
+}
+
+// Função para exibir resultados de perdas em vazio
+function displayNoLoadResults(results) {
+    console.log('[losses] Exibindo resultados de perdas em vazio:', results);
+    
+    const noLoadData = results.perdas_vazio || {};
+    const analysisData = results.analise_sut_eps_vazio || {};
+    
+    // Exibir parâmetros gerais
+    displayGeneralParameters(noLoadData);
+    
+    // Exibir resultados por nível de tensão
+    displayVoltageResults(noLoadData);
+    
+    // Exibir análise SUT/EPS
+    displaySUTAnalysis(analysisData);
+}
+
+// Função para exibir resultados de perdas em carga
+function displayLoadResults(results) {
+    console.log('[losses] Exibindo resultados de perdas em carga:', results);
+    
+    const loadData = results.perdas_carga || {};
+    const capBankData = results.banco_capacitores || {};
+    const sutEpsData = results.analise_sut_eps_carga || {};
+    
+    // Exibir condições nominais
+    displayNominalConditions(loadData);
+    
+    // Exibir resultados detalhados
+    displayDetailedLoadResults(loadData, capBankData, sutEpsData);
+}
+
+// Função para exibir parâmetros gerais
+function displayGeneralParameters(data) {
+    const container = document.getElementById('parametros-gerais-card-body');
+    if (!container) return;
+    
+    const calcData = data.calculos_vazio || {};
+    
+    const html = `
+        <div class="row g-2">
+            <div class="col-12">
+                <table class="table table-sm table-striped">
+                    <tbody>
+                        <tr>
+                            <td><strong>Peso Núcleo Calc:</strong></td>
+                            <td>${calcData.peso_nucleo_calc_ton || 'N/A'} Ton</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Potência Mag. Aço:</strong></td>
+                            <td>${calcData.potencia_mag_aco_kvar || 'N/A'} kVAr</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Corrente Excitação:</strong></td>
+                            <td>${calcData.corrente_excitacao_calc_a || 'N/A'} A</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Corrente Excitação %:</strong></td>
+                            <td>${calcData.corrente_excitacao_percentual_calc || 'N/A'} %</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Função para exibir resultados por nível de tensão
+function displayVoltageResults(data) {
+    const container = document.getElementById('dut-voltage-level-results-body');
+    if (!container) return;
+    
+    const calcData = data.calculos_vazio || {};
+    
+    const html = `
+        <div class="row g-2">
+            <div class="col-12">
+                <table class="table table-sm table-striped">
+                    <tbody>
+                        <tr>
+                            <td><strong>Tensão Teste 1.1pu:</strong></td>
+                            <td>${calcData.tensao_teste_1_1_kv || 'N/A'} kV</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tensão Teste 1.2pu:</strong></td>
+                            <td>${calcData.tensao_teste_1_2_kv || 'N/A'} kV</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Corrente 1.1pu:</strong></td>
+                            <td>${calcData.corrente_excitacao_1_1_calc_a || 'N/A'} A</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Corrente 1.2pu:</strong></td>
+                            <td>${calcData.corrente_excitacao_1_2_calc_a || 'N/A'} A</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Função para exibir análise SUT/EPS
+function displaySUTAnalysis(data) {
+    const container = document.getElementById('sut-analysis-results-area');
+    if (!container) return;
+    
+    const html = `
+        <div class="row g-2">
+            <div class="col-12">
+                <table class="table table-sm table-striped">
+                    <tbody>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td><span class="badge bg-info">Análise SUT/EPS implementada</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Função para exibir condições nominais
+function displayNominalConditions(data) {
+    const container = document.getElementById('condicoes-nominais-card-body');
+    if (!container) return;
+    
+    const html = `
+        <div class="row g-2">
+            <div class="col-12">
+                <table class="table table-sm table-striped">
+                    <tbody>
+                        <tr>
+                            <td><strong>Perdas sem Vazio (Nom):</strong></td>
+                            <td>${data.perdas_carga_sem_vazio_nom || 'N/A'} kW</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tensão CC (Nom):</strong></td>
+                            <td>${data.vcc_nom || 'N/A'} kV</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Corrente Teste (Nom):</strong></td>
+                            <td>${data.corrente_teste_nom || 'N/A'} A</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Função para exibir resultados detalhados de perdas em carga
+function displayDetailedLoadResults(loadData, capBankData, sutEpsData) {
+    const container = document.getElementById('resultados-perdas-carga');
+    if (!container) return;
+    
+    const html = `
+        <div class="card">
+            <div class="card-header">
+                <h6 class="text-center m-0">RESULTADOS DETALHADOS</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Perdas em Carga</h6>
+                        <table class="table table-sm table-striped">
+                            <tbody>
+                                <tr>
+                                    <td>Perdas Tap-:</td>
+                                    <td>${loadData.perdas_carga_sem_vazio_min || 'N/A'} kW</td>
+                                </tr>
+                                <tr>
+                                    <td>Perdas Tap Nom:</td>
+                                    <td>${loadData.perdas_carga_sem_vazio_nom || 'N/A'} kW</td>
+                                </tr>
+                                <tr>
+                                    <td>Perdas Tap+:</td>
+                                    <td>${loadData.perdas_carga_sem_vazio_max || 'N/A'} kW</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success">Banco de Capacitores</h6>
+                        <table class="table table-sm table-striped">
+                            <tbody>
+                                <tr>
+                                    <td>Potência Requerida:</td>
+                                    <td>${capBankData.potencia_banco_capacitores || 'N/A'} MVAr</td>
+                                </tr>
+                                <tr>
+                                    <td>Status:</td>
+                                    <td><span class="badge bg-success">Calculado</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+  }

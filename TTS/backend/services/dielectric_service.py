@@ -304,3 +304,65 @@ def analyze_dielectric_strength(data: Dict[str, Any]) -> Dict[str, Any]:
     results["analise_distribuicao_tensao"] = analise_distribuicao_tensao
 
     return results
+
+
+def analyze_dielectric(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Função principal de análise dielétrica para interface com o roteador.
+    
+    Args:
+        basic_data: Dados básicos do transformador
+        module_inputs: Dados específicos do módulo de análise dielétrica
+    
+    Returns:
+        Dicionário com os resultados da análise dielétrica
+    """
+    try:
+        # Combina dados básicos e específicos do módulo
+        combined_data = {**basic_data, **module_inputs}
+        
+        # Chama a função de análise principal
+        results = analyze_dielectric_strength(combined_data)
+        
+        # Formata os resultados para o padrão esperado pelo frontend
+        formatted_results = {
+            'status': 'success',
+            'data': {
+                'at': {
+                    'nivel_isolamento': f"{results.get('at_bil_distancia_minima', 0):.2f} mm",
+                    'tensao_ensaio_frequencia_industrial': f"{combined_data.get('teste_tensao_aplicada_at', 0)} kV",
+                    'tensao_suportabilidade_impulso': f"{combined_data.get('nbi_at', 0)} kV",
+                    'status': 'APROVADO' if results.get('analise_niveis_isolamento', {}).get('at_bil', {}).get('status') == 'APROVADO' else 'PENDENTE'
+                },
+            'bt': {
+                    'nivel_isolamento': f"{results.get('bt_bil_distancia_minima', 0):.2f} mm",
+                    'tensao_ensaio_frequencia_industrial': f"{combined_data.get('teste_tensao_aplicada_bt', 0)} kV",
+                    'tensao_suportabilidade_impulso': f"{combined_data.get('nbi_bt', 0)} kV",
+                    'status': 'APROVADO' if results.get('analise_niveis_isolamento', {}).get('bt_bil', {}).get('status') == 'APROVADO' else 'PENDENTE'
+                },
+                'resumo': {
+                    'status_geral': 'APROVADO',
+                    'observacoes': f"Análise realizada para altitude de {results.get('altitude', 1000)}m com fator de correção {results.get('fator_correcao_altitude', 1.0):.3f}"
+                }
+            },
+            'calculations': results  # Inclui todos os cálculos detalhados
+        }
+        
+        # Adiciona dados do terciário se existir
+        if combined_data.get('tensao_terciario', 0) > 0:
+            formatted_results['data']['terciario'] = {
+                'nivel_isolamento': f"{combined_data.get('tensao_terciario', 0):.2f} kV",
+                'tensao_ensaio_frequencia_industrial': f"{combined_data.get('teste_tensao_aplicada_terciario', 0)} kV",
+                'tensao_suportabilidade_impulso': f"{combined_data.get('nbi_terciario', 0)} kV",
+                'status': 'PENDENTE'
+            }
+        
+        return formatted_results
+        
+    except Exception as e:
+        logging.error(f"Erro na análise dielétrica: {str(e)}")
+        return {
+            'status': 'error',
+            'message': f"Erro na análise dielétrica: {str(e)}",
+            'data': None
+        }

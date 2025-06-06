@@ -10,6 +10,7 @@ import sqlite3
 from typing import Dict, Any, Optional
 from datetime import datetime
 import threading
+import requests
 
 
 class MCPDataManager:
@@ -33,68 +34,68 @@ class MCPDataManager:
             'transformerInputs': {  # Nome usado no frontend
                 'key': 'transformerInputs',
                 'dependencies': [],
-                'propagates_to': ['losses', 'impulse', 'appliedVoltage', 'inducedVoltage', 'shortCircuit', 'temperatureRise', 'dielectricAnalysis', 'globalInfo'], # Atualizado para refletir dependentes
-                'update_logic_endpoint': None # Não tem endpoint de atualização acionado por dependência
+                'propagates_to': ['losses', 'impulse', 'appliedVoltage', 'inducedVoltage', 'shortCircuit', 'temperatureRise', 'dielectricAnalysis', 'globalInfo'],
+                'update_logic_endpoint': None
             },
             'losses': {
                 'key': 'losses',
                 'dependencies': ['transformerInputs'],
-                'propagates_to': [],
-                'update_logic_endpoint': '../transformer/modules/losses/process' # Endpoint para atualizar este store
+                'propagates_to': ['temperatureRise'],
+                'update_logic_endpoint': 'losses/process'
             },
             'impulse': {
                 'key': 'impulse',
                 'dependencies': ['transformerInputs'],
                 'propagates_to': [],
-                'update_logic_endpoint': '../transformer/modules/impulse/process' # Endpoint para atualizar este store
+                'update_logic_endpoint': 'impulse/process'
             },
-            'appliedVoltage': {  # Nome usado no frontend
+            'appliedVoltage': {
                 'key': 'appliedVoltage',
                 'dependencies': ['transformerInputs'],
                 'propagates_to': [],
-                'update_logic_endpoint': '../transformer/modules/appliedVoltage/process' # Endpoint para atualizar este store
+                'update_logic_endpoint': 'appliedVoltage/process'
             },
-            'inducedVoltage': {  # Nome usado no frontend
+            'inducedVoltage': {
                 'key': 'inducedVoltage',
                 'dependencies': ['transformerInputs'],
                 'propagates_to': [],
-                'update_logic_endpoint': '../transformer/modules/inducedVoltage/process' # Endpoint para atualizar este store
+                'update_logic_endpoint': 'inducedVoltage/process'
             },
-            'shortCircuit': {  # Nome usado no frontend
+            'shortCircuit': {
                 'key': 'shortCircuit',
                 'dependencies': ['transformerInputs'],
                 'propagates_to': [],
-                'update_logic_endpoint': '../transformer/modules/shortCircuit/process' # Endpoint para atualizar este store
+                'update_logic_endpoint': 'shortCircuit/process'
             },
-            'temperatureRise': {  # Nome usado no frontend
+            'temperatureRise': {
                 'key': 'temperatureRise',
-                'dependencies': ['transformerInputs', 'losses'], # temperatureRise depende de transformerInputs e losses
+                'dependencies': ['transformerInputs', 'losses'],
                 'propagates_to': [],
-                'update_logic_endpoint': '../transformer/modules/temperatureRise/process' # Endpoint para atualizar este store
+                'update_logic_endpoint': 'temperatureRise/process'
             },
-            'dielectricAnalysis': {  # Nome usado no frontend
+            'dielectricAnalysis': {
                 'key': 'dielectricAnalysis',
                 'dependencies': ['transformerInputs'],
                 'propagates_to': [],
-                'update_logic_endpoint': '../transformer/modules/dielectricAnalysis/process' # Endpoint para atualizar este store
+                'update_logic_endpoint': 'dielectricAnalysis/process'
             },
             'standards': {
                 'key': 'standards',
                 'dependencies': [],
                 'propagates_to': [],
-                'update_logic_endpoint': None # Não tem endpoint de atualização acionado por dependência
+                'update_logic_endpoint': None
             },
-            'sessions': {  # Para histórico
+            'sessions': {
                 'key': 'sessions',
                 'dependencies': [],
                 'propagates_to': [],
-                'update_logic_endpoint': None # Não tem endpoint de atualização acionado por dependência
+                'update_logic_endpoint': None
             },
-            'globalInfo': {  # Nome usado no frontend
+            'globalInfo': {
                 'key': 'globalInfo',
                 'dependencies': ['transformerInputs'],
                 'propagates_to': [],
-                'update_logic_endpoint': '../transformer/global-update' # Endpoint para atualizar este store (ou acionar a atualização global)
+                'update_logic_endpoint': 'global-update'
             }
         }
         
@@ -232,54 +233,48 @@ class MCPDataManager:
         """
         print(f"Iniciando propagação de mudanças a partir de '{store_id}'")
 
-        # Iterate through all store definitions to find dependents
+        # Iterar por todas as definições de store para encontrar dependentes
         for dependent_store_id, dependent_store_def in self.store_definitions.items():
-            # Check if the updated store_id is in the dependencies of the current dependent store
+            # Verificar se o store_id atualizado está nas dependências do store dependente atual
             if store_id in dependent_store_def.get('dependencies', []):
-                update_endpoint = dependent_store_def.get('update_logic_endpoint')
+                update_endpoint_path = dependent_store_def.get('update_logic_endpoint')
 
-                if update_endpoint:
-                    print(f"Store '{dependent_store_id}' depende de '{store_id}'. Acionando endpoint de atualização: {update_endpoint}")
+                if update_endpoint_path:
+                    print(f"Store '{dependent_store_id}' depende de '{store_id}'. Acionando endpoint: {update_endpoint_path}")
                     try:
-                        # Fetch necessary data for the dependent store's update logic
-                        # This assumes the update logic needs the dependent store's current data
-                        # and the data from its dependencies.
                         payload_data = {}
-                        # Fetch data for the dependent store itself
-                        dependent_store_current_data = self.get_data(dependent_store_id)
-                        payload_data['moduleData'] = dependent_store_current_data.get('inputs', {}) # Assuming module inputs are in 'inputs'
+                        # Dados básicos de transformerInputs (se for uma dependência)
+                        # Todos os módulos dependem de transformerInputs, então basicData é crucial.
+                        transformer_inputs_data = self.get_data('transformerInputs')
+                        payload_data['basicData'] = transformer_inputs_data.get('formData', {})
 
-                        # Fetch data from dependencies
-                        for dep_id in dependent_store_def.get('dependencies', []):
-                             dep_data = self.get_data(dep_id)
-                             if dep_id == 'transformerInputs':
-                                 # Special case for basic data, assuming it's in 'formData'
-                                 payload_data['basicData'] = dep_data.get('formData', {})
-                             else:
-                                 # For other dependencies, include their full data or specific parts as needed
-                                 # This part might need refinement based on actual service needs
-                                 payload_data[dep_id] = dep_data # Including full data for now
+                        # Dados de input do módulo dependente
+                        dependent_module_current_data = self.get_data(dependent_store_id)
+                        payload_data['moduleData'] = dependent_module_current_data.get('inputs', {}) # O que está em 'inputs' do store do módulo
 
+                        # Determinar a URL base correta
+                        # Os endpoints dos módulos estão em /api/transformer/modules/
+                        # O endpoint global-update está em /api/transformer/
+                        if update_endpoint_path == 'global-update':
+                            base_url_prop = "http://localhost:8000/api/transformer"
+                        else:
+                            base_url_prop = "http://localhost:8000/api/transformer/modules"
+                        
+                        full_url = f"{base_url_prop}/{update_endpoint_path.lstrip('/')}"
 
-                        # Construct the full URL for the internal call
-                        # Assuming the backend runs on http://localhost:8000
-                        base_url = "http://localhost:8000/api/data" # Base URL for data endpoints
-                        full_url = f"{base_url}/{update_endpoint.lstrip('/')}" # Ensure correct path joining
+                        print(f"Chamando endpoint interno: POST {full_url} com payload: {json.dumps(payload_data, indent=2)}")
+                        
+                        response = requests.post(full_url, json=payload_data, timeout=10) # Adicionado timeout
+                        response.raise_for_status() 
 
-                        print(f"Chamando endpoint interno: {full_url} com payload: {payload_data}")
-
-                        # Make the internal HTTP POST request (non-blocking if possible, but requests is blocking)
-                        # For a truly non-blocking approach in FastAPI, this should ideally use asyncio and httpx
-                        # or offload to a background task. Using requests.post for simplicity for now.
-                        response = requests.post(full_url, json=payload_data)
-                        response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
-
-                        print(f"Endpoint '{update_endpoint}' para '{dependent_store_id}' acionado com sucesso. Status: {response.status_code}")
-                        # The response body might contain updated data or status, which could be logged or handled.
-                        # For now, just logging success.
+                        print(f"Endpoint '{update_endpoint_path}' para '{dependent_store_id}' acionado com sucesso. Status: {response.status_code}")
+                        # O backend já salva os resultados no MCP através do endpoint chamado.
+                        # Não precisamos fazer store.updateData aqui no _propagate_changes.
 
                     except requests.exceptions.RequestException as e:
-                        print(f"Erro ao acionar endpoint '{update_endpoint}' para '{dependent_store_id}': {e}")
+                        print(f"Erro de requisição ao acionar endpoint '{update_endpoint_path}' para '{dependent_store_id}': {e}")
+                        if e.response is not None:
+                            print(f"Detalhes do erro: {e.response.text}")
                     except Exception as e:
                         print(f"Erro inesperado ao processar propagação para '{dependent_store_id}': {e}")
                 else:

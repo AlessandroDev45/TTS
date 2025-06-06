@@ -3,6 +3,7 @@
 
 import { loadAndPopulateTransformerInfo } from './common_module.js';
 import { initializeIsolationDropdowns, populateIsolationDropdowns, toggleNeutralFieldsVisibility } from './insulation_levels.js';
+import { collectFormData } from './api_persistence.js';
 
 // public/scripts/transformer_inputs.js - Simplificado
 
@@ -125,6 +126,24 @@ async function fillNominalCurrentsFromStore() {
     }
 }
 
+// Função para invocar o cálculo de correntes nominais no backend e atualizar o store
+async function computeNominalCurrents() {
+    console.log('[transformer_inputs] Computando correntes nominais no backend...');
+    const formElement = document.getElementById('transformer-inputs-form-container');
+    const formData = collectFormData(formElement);
+    const response = await fetch('/api/transformer/inputs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    });
+    if (!response.ok) throw new Error(`Erro ao calcular correntes nominais: ${response.status}`);
+    const result = await response.json();
+    const updated = result.updated_data;
+    const store = window.apiDataSystem.getStore('transformerInputs');
+    await store.updateData({ formData: updated });
+    console.log('[transformer_inputs] Store transformerInputs atualizado com dados calculados:', updated);
+}
+
 // Atualiza correntes nominais sempre que campos relevantes mudam
 function setupNominalCurrentAutoUpdate() {
     const ids = [
@@ -145,14 +164,19 @@ function setupNominalCurrentAutoUpdate() {
                     clearTimeout(updateTimeout);
                 }
                 
-                // Aguarda um tempo para a persistência automática e cálculo do backend
+                // Aguarda debounce para persistência e cálculo no backend
                 updateTimeout = setTimeout(async () => {
                     console.log('[setupNominalCurrentAutoUpdate] Atualizando correntes...');
+                    try {
+                        await computeNominalCurrents();
+                    } catch (error) {
+                        console.error('[transformer_inputs] Falha ao calcular correntes:', error);
+                    }
                     await fillNominalCurrentsFromStore();
-                }, 1000); // Aumentei para 1 segundo
-            });
-        }
-    });
+                }, 1000);
+             });
+         }
+     });
 }
 
 // Função de inicialização do módulo Dados Básicos

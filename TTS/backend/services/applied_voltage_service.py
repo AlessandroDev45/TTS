@@ -40,27 +40,28 @@ except ImportError:
             const = MockConstants()
 
 
-def calculate_applied_voltage_test(data: Dict[str, Any]) -> Dict[str, Any]:
+def calculate_applied_voltage(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calcula os parâmetros do teste de tensão aplicada com base nos dados do transformador.
     
     Args:
-        data: Dicionário com os parâmetros básicos do transformador
+        basic_data: Dicionário com os parâmetros básicos do transformador
+        module_inputs: Dicionário com os parâmetros do módulo de tensão aplicada
         
     Returns:
         Dicionário com os resultados calculados para o teste de tensão aplicada
     """    # Extrai parâmetros básicos
-    tipo_transformador = data.get("tipo_transformador", "Trifásico")
-    tensao_at = data.get("tensao_at", 0)
-    tensao_bt = data.get("tensao_bt", 0)
-    classe_tensao_at = data.get("classe_tensao_at", 0)
-    classe_tensao_bt = data.get("classe_tensao_bt", 0)
-    classe_tensao_bucha_neutro = data.get("classe_tensao_bucha_neutro", 0)
-    conexao_at = data.get("conexao_at", "D")
-    conexao_bt = data.get("conexao_bt", "yn")
-    conexao_terciario = data.get("conexao_terciario", "")
-    classe_tensao_terciario = data.get("classe_tensao_terciario", 0)
-    frequencia = data.get("frequencia", 60)  # Hz
+    tipo_transformador = basic_data.get("tipo_transformador", "Trifásico")
+    tensao_at = basic_data.get("tensao_at", 0)
+    tensao_bt = basic_data.get("tensao_bt", 0)
+    classe_tensao_at = basic_data.get("classe_tensao_at", 0)
+    classe_tensao_bt = basic_data.get("classe_tensao_bt", 0)
+    classe_tensao_bucha_neutro = basic_data.get("classe_tensao_bucha_neutro", 0)
+    conexao_at = basic_data.get("conexao_at", "D")
+    conexao_bt = basic_data.get("conexao_bt", "yn")
+    conexao_terciario = basic_data.get("conexao_terciario", "")
+    classe_tensao_terciario = basic_data.get("classe_tensao_terciario", 0)
+    frequencia = basic_data.get("frequencia", 60)  # Hz
       # Determina tensões de teste conforme seção 2.1 da documentação
     # 2.1.1 Para o lado de Alta Tensão (AT)
     if conexao_at and conexao_at.lower().startswith("yn"):

@@ -230,32 +230,33 @@ def is_within_tolerance(valor: float, nominal: float, tolerancia: float) -> bool
     return limite_inferior <= valor <= limite_superior
 
 
-def calculate_impulse_test(data: Dict[str, Any]) -> Dict[str, Any]:
+def calculate_impulse(basic_data: Dict[str, Any], module_inputs: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calcula os parâmetros do teste de impulso com base nos dados do transformador.
     
     Args:
-        data: Dicionário com os parâmetros de entrada
+        basic_data: Dicionário com os parâmetros de entrada do transformer_inputs
+        module_inputs: Dicionário com os parâmetros de entrada do módulo de impulso
         
     Returns:
         Dicionário com os resultados calculados para o teste de impulso
     """
     # Extrai parâmetros básicos
-    tipo_transformador = data.get("tipo_transformador", "Trifásico")
-    tensao_at = data.get("tensao_at", 0)
-    classe_tensao_at = data.get("classe_tensao_at", 0)
-    bil_especificado = data.get("nbi_at", 0)  # Nível Básico de Isolamento especificado para AT
-    norma_isolamento = data.get("norma_isolamento", "NBR/IEC") # Norma de isolamento (NBR/IEC ou IEEE)
-    tipo_impulso = data.get("tipo_impulso", "Atmosférico") # Tipo de impulso (Atmosférico, Manobra, Cortado)
+    tipo_transformador = basic_data.get("tipo_transformador", "Trifásico")
+    tensao_at = basic_data.get("tensao_at", 0)
+    classe_tensao_at = basic_data.get("classe_tensao_at", 0)
+    bil_especificado = basic_data.get("nbi_at", 0)  # Nível Básico de Isolamento especificado para AT
+    norma_isolamento = module_inputs.get("norma_isolamento", "NBR/IEC") # Norma de isolamento (NBR/IEC ou IEEE)
+    tipo_impulso = module_inputs.get("tipo_impulso", "Atmosférico") # Tipo de impulso (Atmosférico, Manobra, Cortado)
 
     # Parâmetros do circuito de impulso
-    resistor_frontal = data.get("resistor_frontal", 500)  # Ohms
-    resistor_cauda = data.get("resistor_cauda", 2000)  # Ohms
-    capacitancia_gerador = data.get("capacitancia_gerador", 1.0)  # nF
-    capacitancia_objeto = data.get("capacitancia_objeto", 1000.0)  # pF
-    indutancia = data.get("indutancia", 5.0)  # μH
-    tempo_corte_input = data.get("tempo_corte", None)  # μs para impulso cortado (pode ser None)
-    gap_distance_mm = data.get("gap_distance_mm", None) # Distância do gap em mm (para calcular tempo de corte)
+    resistor_frontal = module_inputs.get("resistor_frontal", 500)  # Ohms
+    resistor_cauda = module_inputs.get("resistor_cauda", 2000)  # Ohms
+    capacitancia_gerador = module_inputs.get("capacitancia_gerador", 1.0)  # nF
+    capacitancia_objeto = module_inputs.get("capacitancia_objeto", 1000.0)  # pF
+    indutancia = module_inputs.get("indutancia", 5.0)  # μH
+    tempo_corte_input = module_inputs.get("tempo_corte", None)  # μs para impulso cortado (pode ser None)
+    gap_distance_mm = module_inputs.get("gap_distance_mm", None) # Distância do gap em mm (para calcular tempo de corte)
 
 
     # 1.1. Seleção do BIL/SIL com base na norma e tensão
