@@ -108,7 +108,7 @@ async def update_transformer_inputs(data: TransformerInputsData = Body(...)):
         if mcp_data_manager is None:
             raise HTTPException(status_code=500, detail="Sistema de dados não inicializado")
 
-        success = mcp_data_manager.patch_data('transformer_inputs', {"formData": final_data})
+        success = mcp_data_manager.patch_data('transformerInputs', {"formData": final_data})
         
         if success:
             return {

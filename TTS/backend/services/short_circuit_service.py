@@ -59,11 +59,19 @@ def calculate_nominal_currents(data: Dict[str, Any]) -> Dict[str, float]:
     i_nom_bt = (potencia_nominal * 1000) / (fator * tensao_bt) if tensao_bt > 0 else 0
     # Cálculo para o lado terciário
     i_nom_ter = (potencia_nominal * 1000) / (fator * tensao_terciario) if tensao_terciario > 0 else 0
-    
+
+    # Cálculo para taps AT (tap+ e tap-)
+    tensao_at_tap_maior = data.get("tensao_at_tap_maior", 0)
+    tensao_at_tap_menor = data.get("tensao_at_tap_menor", 0)
+    i_nom_at_tap_maior = (potencia_nominal * 1000) / (fator * tensao_at_tap_maior) if tensao_at_tap_maior > 0 else 0
+    i_nom_at_tap_menor = (potencia_nominal * 1000) / (fator * tensao_at_tap_menor) if tensao_at_tap_menor > 0 else 0
+
     return {
         "i_nom_at": i_nom_at,
         "i_nom_bt": i_nom_bt,
-        "i_nom_ter": i_nom_ter # Adicionado terciário
+        "i_nom_ter": i_nom_ter,
+        "i_nom_at_tap_maior": i_nom_at_tap_maior,
+        "i_nom_at_tap_menor": i_nom_at_tap_menor
     }
 
 
