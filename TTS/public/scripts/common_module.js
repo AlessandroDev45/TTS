@@ -110,18 +110,19 @@ async function loadAndPopulateTransformerInfo(targetElementId) {
             }
         }
 
-        // Função auxiliar para preencher campo com verificação de existência
-        const fillField = (elementId, value) => {
+        // Função auxiliar para preencher campo com verificação de existência e adicionar unidade
+        const fillField = (elementId, value, unit = '') => {
             const element = document.getElementById(elementId);
             if (element) {
                 // Verifica se o valor é um número e formata para 2 casas decimais, caso contrário usa '-'
                 if (typeof value === 'number' && !isNaN(value)) {
-                    element.textContent = value.toFixed(2);
+                    element.textContent = `${value.toFixed(2)} ${unit}`.trim();
                 } else {
-                    element.textContent = value || '-';
+                    element.textContent = `${value || '-'} ${unit}`.trim();
                 }
             }
-        };        // Preenche os campos do template com os dados
+        };
+        // Preenche os campos do template com os dados
         if (basicData && Object.keys(basicData).length > 0) {
             console.log("[common_module] loadAndPopulateTransformerInfo: Preenchendo painel com dados:", basicData);
 
@@ -132,139 +133,170 @@ async function loadAndPopulateTransformerInfo(targetElementId) {
             }
 
             // Especificações Gerais
-            fillField('info-potencia-mva', basicData.potencia_mva);
-            fillField('info-frequencia', basicData.frequencia);
+            // Especificações Gerais
+            fillField('info-potencia-mva', basicData.potencia_mva, 'MVA');
+            fillField('info-frequencia', basicData.frequencia, 'Hz');
             fillField('info-tipo-transformador', basicData.tipo_transformador);
             fillField('info-grupo-ligacao', basicData.grupo_ligacao);
             fillField('info-liquido-isolante', basicData.liquido_isolante);
-            fillField('info-norma-iso', basicData.norma_iso);            // Temperaturas e Pesos
-            fillField('info-elevacao-oleo-topo', basicData.elevacao_oleo_topo);
-            fillField('info-elevacao-enrol', basicData.elevacao_enrol);
-            fillField('info-peso-parte-ativa', basicData.peso_parte_ativa);
-            fillField('info-peso-tanque', basicData.peso_tanque_acessorios); // Mapped to peso_tanque_acessorios
-            fillField('info-peso-oleo', basicData.peso_oleo);
-            fillField('info-peso-total', basicData.peso_total);
+            fillField('info-norma-iso', basicData.norma_iso);
+            // Temperaturas e Pesos
+            fillField('info-elevacao-oleo-topo', basicData.elevacao_oleo_topo, '°C');
+            fillField('info-elevacao-enrol', basicData.elevacao_enrol, '°C');
+            fillField('info-peso-parte-ativa', basicData.peso_parte_ativa, 'ton');
+            fillField('info-peso-tanque', basicData.peso_tanque_acessorios, 'ton'); // Mapped to peso_tanque_acessorios
+            fillField('info-peso-oleo', basicData.peso_oleo, 'ton');
+            fillField('info-peso-total', basicData.peso_total, 'ton');
             fillField('info-tipo-isolamento', basicData.tipo_isolamento);
 
             // Dados da Alta Tensão (AT)
-            fillField('info-tensao-at', basicData.tensao_at);
-            fillField('info-classe-tensao-at', basicData.classe_tensao_at);
-            fillField('info-corrente-nominal-at', basicData.corrente_nominal_at);
-            fillField('info-impedancia', basicData.impedancia);
-            fillField('info-nbi-at', basicData.nbi_at);
+            fillField('info-tensao-at', basicData.tensao_at, 'kV');
+            fillField('info-classe-tensao-at', basicData.classe_tensao_at, 'kV');
+            fillField('info-corrente-nominal-at', basicData.corrente_nominal_at, 'A');
+            fillField('info-impedancia', basicData.impedancia, '%');
+            fillField('info-nbi-at', basicData.nbi_at, 'kVp');
+            fillField('info-sil-im-at', basicData.sil_at, 'kVp'); // Adicionado SIL/IM AT
             fillField('info-conexao-at', basicData.conexao_at);
+            fillField('info-tensao-neutro-at', basicData.tensao_bucha_neutro_at, 'kVp'); // Adicionado Tensao Neutro AT
+            fillField('info-nbi-neutro-at', basicData.nbi_neutro_at, 'kVp'); // Adicionado NBI Neutro AT
+            fillField('info-sil-im-neutro-at', basicData.sil_neutro_at, 'kVp'); // Adicionado SIL/IM Neutro AT
+            fillField('info-iac-at', basicData.iac_at, 'kVp'); // Alterado para kVp conforme solicitado
 
             // TAPs AT
-            fillField('info-tensao-at-tap-maior', basicData.tensao_at_tap_maior);
-            fillField('info-tensao-at-tap-menor', basicData.tensao_at_tap_menor);
-            fillField('info-corrente-nominal-at-tap-maior', basicData.corrente_nominal_at_tap_maior);
-            fillField('info-corrente-nominal-at-tap-menor', basicData.corrente_nominal_at_tap_menor);
-            fillField('info-impedancia-tap-maior', basicData.impedancia_tap_maior);
-            fillField('info-impedancia-tap-menor', basicData.impedancia_tap_menor);
+            fillField('info-tensao-at-tap-maior', basicData.tensao_at_tap_maior, 'kV');
+            fillField('info-tensao-at-tap-menor', basicData.tensao_at_tap_menor, 'kV');
+            fillField('info-corrente-nominal-at-tap-maior', basicData.corrente_nominal_at_tap_maior, 'A');
+            fillField('info-corrente-nominal-at-tap-menor', basicData.corrente_nominal_at_tap_menor, 'A');
+            fillField('info-impedancia-tap-maior', basicData.impedancia_tap_maior, '%');
+            fillField('info-impedancia-tap-menor', basicData.impedancia_tap_menor, '%');
             fillField('info-degrau-comutador', basicData.degrau_comutador);
             fillField('info-num-degraus-comutador', basicData.num_degraus_comutador);
             fillField('info-posicao-comutador', basicData.posicao_comutador);
             
             // Dados da Baixa Tensão (BT)
-            fillField('info-tensao-bt', basicData.tensao_bt);
-            fillField('info-classe-tensao-bt', basicData.classe_tensao_bt);
-            fillField('info-corrente-nominal-bt', basicData.corrente_nominal_bt);
-            fillField('info-nbi-bt', basicData.nbi_bt);
+            fillField('info-tensao-bt', basicData.tensao_bt, 'kV');
+            fillField('info-classe-tensao-bt', basicData.classe_tensao_bt, 'kV');
+            fillField('info-corrente-nominal-bt', basicData.corrente_nominal_bt, 'A');
+            fillField('info-nbi-bt', basicData.nbi_bt, 'kVp');
+            fillField('info-sil-im-bt', basicData.sil_bt, 'kVp'); // Adicionado SIL/IM BT
             fillField('info-conexao-bt', basicData.conexao_bt);
+            fillField('info-classe-neutro-bt', basicData.tensao_bucha_neutro_bt, 'kVp'); // Adicionado Classe Neutro BT
+            fillField('info-nbi-neutro-bt', basicData.nbi_neutro_bt, 'kVp'); // Adicionado NBI Neutro BT
+            fillField('info-sil-im-neutro-bt', basicData.sil_neutro_bt, 'kVp'); // Adicionado SIL/IM Neutro BT
+            fillField('info-iac-bt', basicData.iac_bt, 'kVp'); // Alterado para kVp conforme solicitado
 
             // Dados do Terciário
-            fillField('info-tensao-terciario', basicData.tensao_terciario);
-            fillField('info-classe-tensao-terciario', basicData.classe_tensao_terciario);
-            fillField('info-corrente-nominal-terciario', basicData.corrente_nominal_terciario);
-            fillField('info-nbi-terciario', basicData.nbi_terciario);
+            fillField('info-tensao-terciario', basicData.tensao_terciario, 'kV');
+            fillField('info-classe-tensao-terciario', basicData.classe_tensao_terciario, 'kV');
+            fillField('info-corrente-nominal-terciario', basicData.corrente_nominal_terciario, 'A');
+            fillField('info-nbi-terciario', basicData.nbi_terciario, 'kVp');
+            fillField('info-sil-im-terciario', basicData.sil_terciario, 'kVp'); // Adicionado SIL/IM Terciário
             fillField('info-conexao-terciario', basicData.conexao_terciario);
-            fillField('info-impedancia-at-terciario', basicData.impedancia_at_terciario);
-            fillField('info-impedancia-bt-terciario', basicData.impedancia_bt_terciario);
+            fillField('info-classe-neutro-terciario', basicData.tensao_bucha_neutro_terciario, 'kVp'); // Adicionado Classe Neutro Terciário
+            fillField('info-nbi-neutro-terciario', basicData.nbi_neutro_terciario, 'kVp'); // Adicionado NBI Neutro Terciário
+            fillField('info-sil-im-neutro-terciario', basicData.sil_neutro_terciario, 'kVp'); // Adicionado SIL/IM Neutro Terciário
+            fillField('info-impedancia-at-terciario', basicData.impedancia_at_terciario, '%');
+            fillField('info-impedancia-bt-terciario', basicData.impedancia_bt_terciario, '%');
+            fillField('info-iac-terciario', basicData.iac_terciario, 'kVp'); // Alterado para kVp conforme solicitado
 
             // Tensões de Ensaio
-            fillField('info-teste-tensao-aplicada-at', basicData.teste_tensao_aplicada_at);
-            fillField('info-teste-tensao-induzida-at', basicData.teste_tensao_induzida_at);
-            fillField('info-teste-tensao-aplicada-bt', basicData.teste_tensao_aplicada_bt);
-            fillField('info-teste-tensao-aplicada-terciario', basicData.teste_tensao_aplicada_terciario);
+            fillField('info-teste-tensao-aplicada-at', basicData.teste_tensao_aplicada_at, 'kVRms');
+            fillField('info-teste-tensao-induzida-at', basicData.teste_tensao_induzida_at, 'kVRms');
+            fillField('info-teste-tensao-aplicada-bt', basicData.teste_tensao_aplicada_bt, 'kVRms');
+            fillField('info-teste-tensao-aplicada-terciario', basicData.teste_tensao_aplicada_terciario, 'kVRms');
 
             // Ensaios e Perdas
-            fillField('info-perdas-vazio', basicData.perdas_vazio);
-            fillField('info-perdas-curto-circuito', basicData.perdas_curto_circuito);
-            fillField('info-corrente-excitacao', basicData.corrente_excitacao);
+            fillField('info-perdas-vazio', basicData.perdas_vazio, 'kW');
+            fillField('info-perdas-curto-circuito', basicData.perdas_curto_circuito, 'kW');
+            fillField('info-corrente-excitacao', basicData.corrente_excitacao, '%');
             fillField('info-fator-k', basicData.fator_k);
             fillField('info-classe-precisao', basicData.classe_precisao);
-            fillField('info-frequencia-ressonancia', basicData.frequencia_ressonancia);
+            fillField('info-frequencia-ressonancia', basicData.frequencia_ressonancia, 'Hz');
 
         } else {
             console.log("[common_module] loadAndPopulateTransformerInfo: Nenhum dado do transformador encontrado - exibindo campos vazios");
             // Limpa os campos se não houver dados (comportamento normal para formulário vazio)
 
             // Especificações Gerais
-            fillField('info-potencia-mva', '');
-            fillField('info-frequencia', '');
+            fillField('info-potencia-mva', '', 'MVA');
+            fillField('info-frequencia', '', 'Hz');
             fillField('info-tipo-transformador', '');
             fillField('info-grupo-ligacao', '');
             fillField('info-liquido-isolante', '');
-            fillField('info-norma-iso', '');            // Temperaturas e Pesos
-            fillField('info-elevacao-oleo-topo', '');
-            fillField('info-elevacao-enrol', '');
-            fillField('info-peso-parte-ativa', '');
-            fillField('info-peso-tanque', '');
-            fillField('info-peso-oleo', '');
-            fillField('info-peso-total', '');
+            fillField('info-norma-iso', '');
+            // Temperaturas e Pesos
+            fillField('info-elevacao-oleo-topo', '', '°C');
+            fillField('info-elevacao-enrol', '', '°C');
+            fillField('info-peso-parte-ativa', '', 'ton');
+            fillField('info-peso-tanque', '', 'ton');
+            fillField('info-peso-oleo', '', 'ton');
+            fillField('info-peso-total', '', 'ton');
             fillField('info-tipo-isolamento', '');
 
             // Dados da Alta Tensão
-            fillField('info-tensao-at', '');
-            fillField('info-classe-tensao-at', '');
-            fillField('info-corrente-nominal-at', '');
-            fillField('info-impedancia', '');
-            fillField('info-nbi-at', '');
+            fillField('info-tensao-at', '', 'kV');
+            fillField('info-classe-tensao-at', '', 'kV');
+            fillField('info-corrente-nominal-at', '', 'A');
+            fillField('info-impedancia', '', '%');
+            fillField('info-nbi-at', '', 'kVp');
+            fillField('info-sil-im-at', '', 'kVp'); // Adicionado SIL/IM AT
             fillField('info-conexao-at', '');
+            fillField('info-tensao-neutro-at', '', 'kVp'); // Adicionado Tensao Neutro AT
+            fillField('info-nbi-neutro-at', '', 'kVp'); // Adicionado NBI Neutro AT
+            fillField('info-sil-im-neutro-at', '', 'kVp'); // Adicionado SIL/IM Neutro AT
+            fillField('info-iac-at', '', 'kVp'); // Alterado para kVp conforme solicitado
 
             // TAPs AT
-            fillField('info-tensao-at-tap-maior', '');
-            fillField('info-tensao-at-tap-menor', '');
-            fillField('info-corrente-nominal-at-tap-maior', '');
-            fillField('info-corrente-nominal-at-tap-menor', '');
-            fillField('info-impedancia-tap-maior', '');
-            fillField('info-impedancia-tap-menor', '');
+            fillField('info-tensao-at-tap-maior', '', 'kV');
+            fillField('info-tensao-at-tap-menor', '', 'kV');
+            fillField('info-corrente-nominal-at-tap-maior', '', 'A');
+            fillField('info-corrente-nominal-at-tap-menor', '', 'A');
+            fillField('info-impedancia-tap-maior', '', '%');
+            fillField('info-impedancia-tap-menor', '', '%');
             fillField('info-degrau-comutador', '');
             fillField('info-num-degraus-comutador', '');
             fillField('info-posicao-comutador', '');
 
             // Dados da Baixa Tensão
-            fillField('info-tensao-bt', '');
-            fillField('info-classe-tensao-bt', '');
-            fillField('info-corrente-nominal-bt', '');
-            fillField('info-corrente-nominal-bt', '');
-            fillField('info-nbi-bt', '');
+            fillField('info-tensao-bt', '', 'kV');
+            fillField('info-classe-tensao-bt', '', 'kV');
+            fillField('info-corrente-nominal-bt', '', 'A');
+            fillField('info-nbi-bt', '', 'kVp');
+            fillField('info-sil-im-bt', '', 'kVp'); // Adicionado SIL/IM BT
             fillField('info-conexao-bt', '');
+            fillField('info-classe-neutro-bt', '', 'kVp'); // Adicionado Classe Neutro BT
+            fillField('info-nbi-neutro-bt', '', 'kVp'); // Adicionado NBI Neutro BT
+            fillField('info-sil-im-neutro-bt', '', 'kVp'); // Adicionado SIL/IM Neutro BT
+            fillField('info-iac-bt', '', 'kVp'); // Alterado para kVp conforme solicitado
 
             // Dados do Terciário
-            fillField('info-tensao-terciario', '');
-            fillField('info-classe-tensao-terciario', '');
-            fillField('info-corrente-nominal-terciario', '');
-            fillField('info-nbi-terciario', '');
+            fillField('info-tensao-terciario', '', 'kV');
+            fillField('info-classe-tensao-terciario', '', 'kV');
+            fillField('info-corrente-nominal-terciario', '', 'A');
+            fillField('info-nbi-terciario', '', 'kVp');
+            fillField('info-sil-im-terciario', '', 'kVp'); // Adicionado SIL/IM Terciário
             fillField('info-conexao-terciario', '');
-            fillField('info-impedancia-at-terciario', '');
-            fillField('info-impedancia-bt-terciario', '');
+            fillField('info-classe-neutro-terciario', '', 'kVp'); // Adicionado Classe Neutro Terciário
+            fillField('info-nbi-neutro-terciario', '', 'kVp'); // Adicionado NBI Neutro Terciário
+            fillField('info-sil-im-neutro-terciario', '', 'kVp'); // Adicionado SIL/IM Neutro Terciário
+            fillField('info-impedancia-at-terciario', '', '%');
+            fillField('info-impedancia-bt-terciario', '', '%');
+            fillField('info-iac-terciario', '', 'kVp'); // Alterado para kVp conforme solicitado
 
             // Tensões de Ensaio
-            fillField('info-teste-tensao-aplicada-at', '');
-            fillField('info-teste-tensao-induzida-at', '');
-            fillField('info-teste-tensao-aplicada-bt', '');
-            fillField('info-teste-tensao-aplicada-terciario', '');
+            fillField('info-teste-tensao-aplicada-at', '', 'kVRms');
+            fillField('info-teste-tensao-induzida-at', '', 'kVRms');
+            fillField('info-teste-tensao-aplicada-bt', '', 'kVRms');
+            fillField('info-teste-tensao-aplicada-terciario', '', 'kVRms');
 
             // Ensaios e Perdas
-            fillField('info-perdas-vazio', '');
-            fillField('info-perdas-curto-circuito', '');
-            fillField('info-corrente-excitacao', '');
+            fillField('info-perdas-vazio', '', 'kW');
+            fillField('info-perdas-curto-circuito', '', 'kW');
+            fillField('info-corrente-excitacao', '', '%');
             fillField('info-fator-k', '');
             fillField('info-classe-precisao', '');
-            fillField('info-frequencia-ressonancia', '');
+            fillField('info-frequencia-ressonancia', '', 'Hz');
         }
-
     } catch (error) {
         console.error('[common_module] loadAndPopulateTransformerInfo: Erro ao carregar ou preencher o painel de informações do transformador:', error);
         targetElement.innerHTML = `

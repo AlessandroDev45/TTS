@@ -84,7 +84,6 @@ async function initLosses() {
     // Load stored data and populate forms and results if available
     await loadLossesDataAndPopulateForm();
 
-
     // Event listeners for tab changes
     const tabButtons = document.querySelectorAll('#lossesTab .nav-link');
     tabButtons.forEach(tabButton => {
