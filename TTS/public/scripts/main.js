@@ -11,15 +11,25 @@ document.addEventListener('DOMContentLoaded', async () => { // Tornar o listener
     
     // Function to apply the selected theme
     function applyTheme(theme) {
+        // Remove classes anteriores
+        body.classList.remove('light-theme', 'dark-theme');
+
+        // Aplica o atributo data-bs-theme para compatibilidade com Bootstrap
         body.setAttribute('data-bs-theme', theme);
+
         if (theme === 'dark') {
-            if (themeToggleIcon) themeToggleIcon.classList.replace('fa-sun', 'fa-moon'); 
-            if (themeToggleText) themeToggleText.textContent = 'Tema Escuro'; 
+            body.classList.add('dark-theme');
+            if (themeToggleIcon) themeToggleIcon.classList.replace('fa-sun', 'fa-moon');
+            if (themeToggleText) themeToggleText.textContent = 'Tema Escuro';
         } else {
-            if (themeToggleIcon) themeToggleIcon.classList.replace('fa-moon', 'fa-sun'); 
-            if (themeToggleText) themeToggleText.textContent = 'Tema Claro'; 
+            body.classList.add('light-theme');
+            if (themeToggleIcon) themeToggleIcon.classList.replace('fa-moon', 'fa-sun');
+            if (themeToggleText) themeToggleText.textContent = 'Tema Claro';
         }
         localStorage.setItem('theme', theme);
+
+        // Log para debug
+        console.log(`[Theme] Tema aplicado: ${theme}, classes do body:`, body.className);
     }
 
     // Initialize theme based on localStorage or default to dark
