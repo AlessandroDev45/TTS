@@ -349,9 +349,44 @@ function fillFormWithData(formElement, data) {
                     element.checked = true;
                     console.log(`[api_persistence] fillFormWithData: Preenchido radio ${key} com ${data[key]}`);
                 }
+            } else if (element.tagName === 'SELECT') {
+                // Tratamento especial para dropdowns/select
+                const value = data[key];
+                if (value !== null && value !== undefined) {
+                    element.value = value;
+                    // Verifica se o valor foi realmente definido
+                    if (element.value === value) {
+                        console.log(`[api_persistence] fillFormWithData: Preenchido select ${key} com "${value}"`);
+                    } else {
+                        console.warn(`[api_persistence] fillFormWithData: Falha ao definir valor "${value}" para select ${key}. Valor atual: "${element.value}"`);
+                        // Tenta encontrar a opção correspondente
+                        const option = element.querySelector(`option[value="${value}"]`);
+                        if (option) {
+                            option.selected = true;
+                            console.log(`[api_persistence] fillFormWithData: Opção "${value}" selecionada manualmente para ${key}`);
+                        } else {
+                            console.warn(`[api_persistence] fillFormWithData: Opção "${value}" não encontrada para select ${key}`);
+                        }
+                    }
+                } else {
+                    console.log(`[api_persistence] fillFormWithData: Valor null/undefined para select ${key}, mantendo valor atual`);
+                }
             } else {
-                element.value = data[key];
-                console.log(`[api_persistence] fillFormWithData: Preenchido input ${key} com "${data[key]}"`);
+                // Para inputs normais
+                const value = data[key];
+                if (value !== null && value !== undefined) {
+                    // Formatar campos numéricos com 2 casas decimais
+                    if (element.type === 'number' && typeof value === 'number' && !isNaN(value)) {
+                        element.value = value.toFixed(2);
+                        console.log(`[api_persistence] fillFormWithData: Preenchido input numérico ${key} com "${element.value}" (valor original: ${value})`);
+                    } else {
+                        element.value = value;
+                        console.log(`[api_persistence] fillFormWithData: Preenchido input ${key} com "${value}"`);
+                    }
+                } else {
+                    element.value = '';
+                    console.log(`[api_persistence] fillFormWithData: Limpo input ${key} (valor era null/undefined)`);
+                }
             }
         } else {
              console.warn(`[api_persistence] fillFormWithData: Elemento #${key} não encontrado no formulário.`);

@@ -738,6 +738,292 @@ small.text-muted {
     line-height: 1.2;
 }
 
+/* Tabela simples para o painel de informações do transformador */
+.transformer-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--border-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Cabeçalho */
+.transformer-table thead th {
+    background-color: var(--background-card-header);
+    color: var(--text-header);
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header-row th {
+    background-color: var(--background-card-header);
+}
+
+.subheader-row th {
+    background-color: rgba(var(--background-card-header-rgb), 0.7);
+    color: var(--text-muted);
+    font-size: 0.64rem;
+    padding: 2px 4px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Divisórias grossas entre seções principais */
+.divider-thick {
+    background-color: var(--border-color);
+    width: 3px !important;
+    min-width: 3px !important;
+    max-width: 3px !important;
+    padding: 0 !important;
+    border-left: 2px solid var(--border-color);
+    border-right: 2px solid var(--border-color);
+}
+
+/* Colunas específicas */
+.col-general { background-color: rgba(var(--info-rgb), 0.1); }
+.col-at { background-color: rgba(var(--primary-rgb), 0.1); }
+.col-bt { background-color: rgba(var(--success-rgb), 0.1); }
+.col-terc { background-color: rgba(var(--warning-rgb), 0.1); }
+.col-pesos { background-color: rgba(var(--secondary-rgb), 0.1); }
+
+/* Sub-cabeçalhos */
+.sub-at { background-color: rgba(var(--primary-rgb), 0.05); }
+.sub-bt { background-color: rgba(var(--success-rgb), 0.05); }
+.sub-terc { background-color: rgba(var(--warning-rgb), 0.05); }
+
+/* Linhas de dados */
+.transformer-table tbody td {
+    padding: 4px 6px;
+    border: 1px solid rgba(var(--border-color-rgb), 0.3);
+    text-align: left;
+    font-size: var(--font-size-sm);
+    vertical-align: middle;
+    white-space: nowrap;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.label-cell {
+    background-color: rgba(var(--info-rgb), 0.05);
+    text-align: left !important;
+    font-weight: 500;
+    color: var(--text-light);
+    white-space: nowrap;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: var(--font-size-sm);
+}
+
+.value-cell {
+    color: var(--text-light);
+    min-width: 60px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: var(--font-size-sm);
+}
+
+.value-cell span {
+    font-weight: normal;
+    color: var(--text-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Alternância de cores nas linhas */
+.data-row:nth-child(odd) {
+    background-color: rgba(var(--background-card-rgb), 0.02);
+}
+
+.data-row:nth-child(even) {
+    background-color: rgba(var(--background-card-rgb), 0.05);
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+    .transformer-table {
+        font-size: 0.65rem;
+    }
+
+    .transformer-table thead th {
+        padding: 3px 4px;
+        font-size: 0.64rem;
+    }
+
+    .transformer-table tbody td {
+        padding: 2px 4px;
+        font-size: 0.62rem;
+    }
+}
+
+/* Nova tabela limpa */
+.transformer-table-clean {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.7rem;
+    border: 2px solid var(--border-color);
+    margin: 0;
+}
+
+.transformer-table-clean thead th {
+    background-color: var(--background-card-header);
+    color: var(--text-header);
+    padding: 6px 4px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: bold;
+    vertical-align: middle;
+}
+
+.transformer-table-clean .subheader th {
+    background-color: rgba(var(--background-card-header-rgb), 0.7);
+    color: var(--text-muted);
+    font-size: 0.64rem;
+    padding: 3px 2px;
+    font-weight: normal;
+}
+
+.transformer-table-clean tbody td {
+    padding: 4px 3px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    font-size: 0.64rem;
+    vertical-align: top;
+    line-height: 1.2;
+}
+
+.transformer-table-clean .label {
+    background-color: rgba(var(--info-rgb), 0.08);
+    text-align: left;
+    font-weight: bold;
+    color: var(--text-muted);
+    padding: 4px 6px;
+}
+
+.transformer-table-clean .data {
+    background-color: rgba(var(--background-card-rgb), 0.02);
+    font-family: 'Courier New', monospace;
+    color: var(--text-light);
+    min-width: 60px;
+}
+
+.transformer-table-clean .data span {
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+/* Cores das colunas */
+.col-general { background-color: rgba(var(--info-rgb), 0.15); }
+.col-at { background-color: rgba(var(--primary-rgb), 0.15); }
+.col-bt { background-color: rgba(var(--success-rgb), 0.15); }
+.col-terc { background-color: rgba(var(--warning-rgb), 0.15); }
+.col-pesos { background-color: rgba(var(--secondary-rgb), 0.15); }
+
+/* Alternância de linhas */
+.transformer-table-clean tbody tr:nth-child(odd) {
+    background-color: rgba(var(--background-card-rgb), 0.03);
+}
+
+.transformer-table-clean tbody tr:nth-child(even) {
+    background-color: rgba(var(--background-card-rgb), 0.06);
+}
+
+.info-divider-vertical {
+    width: 1px;
+    background-color: var(--border-color);
+    margin: 0 4px;
+    min-height: 100px;
+}
+
+.info-divider-horizontal {
+    height: 1px;
+    background-color: rgba(var(--border-color-rgb), 0.3);
+    margin: 2px 0;
+    width: 100%;
+}
+
+.info-section-title {
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px dotted rgba(var(--border-color-rgb), 0.3);
+}
+
+.info-section-subtitle {
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-bottom: 2px;
+    color: var(--text-muted);
+}
+
+.info-item {
+    font-size: 0.68rem;
+    line-height: 1.2;
+    margin-bottom: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1px 0;
+}
+
+.info-item strong {
+    margin-right: 4px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
+.info-item span {
+    color: var(--text-light);
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Grids internos para AT e Terciário */
+.at-content-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: start;
+    width: 100%;
+}
+
+.at-main-data {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.at-taps-data {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: 8px;
+    border-left: 1px dotted rgba(var(--primary-rgb), 0.3);
+}
+
+.terciario-content-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: start;
+    width: 100%;
+}
+
+.terciario-main-data {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pesos-data {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: 8px;
+    border-left: 1px dotted rgba(var(--warning-rgb), 0.3);
+}
+
 .info-group-general {
     background-color: rgba(var(--info-rgb), 0.08);
     border-left: 3px solid var(--info);
@@ -833,16 +1119,38 @@ small.text-muted {
 
 /* Ajustes de layout para o módulo de Perdas */
 .losses-tab-content-custom {
-    height: 100%; /* Garante que o container das abas ocupe a altura total disponível */
-    display: flex; /* Garante que seja um container flexível */
-    flex-direction: column; /* Organiza os filhos em coluna */
+    display: flex; /* Garante que o container das abas seja flex */
+    flex-direction: column; /* Organiza os filhos (tab-panes) em coluna */
+    flex-grow: 1; /* Faz este container crescer para preencher o card-body */
+    /* IMPORTANTE: Adicionar overflow: hidden pode ajudar se o conteúdo interno estiver causando problemas,
+       mas pode cortar conteúdo se não for bem gerenciado. Teste se necessário. */
+    /* overflow: hidden; */
 }
 
+/* Estilo padrão para todas as tab-panes DENTRO de .losses-tab-content-custom */
 .losses-tab-content-custom > .tab-pane {
-    height: 100%; /* Garante que cada aba ocupe a altura total do container */
-    display: flex; /* Garante que a aba seja um container flexível */
-    flex-direction: column; /* Organiza o conteúdo da aba em coluna */
+    /* Por padrão, Bootstrap esconde abas inativas (geralmente com display: none).
+       Não precisamos definir display: flex ou flex-grow aqui para todas as abas,
+       pois isso conflitaria com o Bootstrap. */
+    /* As classes d-flex flex-column flex-grow-1 já estão no HTML das tab-panes.
+       A regra CSS abaixo para .show.active irá garantir que essas propriedades
+       sejam aplicadas de forma robusta quando a aba estiver ativa. */
+    position: relative;
 }
+
+/* Estilo específico para a tab-pane ATIVA e VISÍVEL */
+.losses-tab-content-custom > .tab-pane.show.active {
+    /* Garante que a aba ativa se comporte como um container flex que cresce.
+       O !important é usado para garantir prioridade sobre outros estilos do Bootstrap
+       ou classes de utilidade que possam estar sendo aplicadas de forma conflitante. */
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+    /* height: 100%; */ /* Em geral, flex-grow: 1 é suficiente. Height: 100% pode ser
+                           tentado se flex-grow sozinho não estiver funcionando como esperado,
+                           mas certifique-se de que os pais têm alturas definidas ou também crescem. */
+}
+
 
 /* Ajustes para o card de Perdas */
 .losses-card {
@@ -908,7 +1216,7 @@ small.text-muted {
 /* Utility classes for short_circuit.html */
 .hidden { display: none; }
 .mb-05 { margin-bottom: 0.5rem; }
-.text-primary { color: var(--primary-color); font-size: 1rem; }
+/* .text-primary { color: var(--primary-color); font-size: 1rem; }  <- Removido para evitar conflito com utilitário global */
 .text-fail { color: var(--fail-color); font-size: 1rem; }
 
 /* Utility classes for induced_voltage.html */
@@ -919,3 +1227,33 @@ small.text-muted {
 /* Utility classes for impulse.html */
 .container-min-height { min-height: calc(100vh - 120px); }
 .text-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Estilos para dados herdados no painel de informações */
+.inherited-data-highlight {
+    color: var(--success) !important;
+    font-weight: bold !important;
+    text-shadow: 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+.inherited-field-container {
+    position: relative;
+    cursor: help;
+}
+
+.inherited-field-container:hover {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-radius: 3px;
+    padding: 1px 3px;
+    margin: -1px -3px;
+}
+
+.inheritance-indicator {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    animation: inheritanceGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes inheritanceGlow {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+}

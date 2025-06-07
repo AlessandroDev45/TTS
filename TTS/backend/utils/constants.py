@@ -531,8 +531,10 @@ IAC_NBI_FACTOR = 1.1     # IAC = 110% do NBI
 TENSAO_INDUZIDA_FACTOR = 2.0  # Tensão induzida = 2x tensão nominal
 
 # Limites para aplicação de SIL e PD
-SIL_MIN_VOLTAGE = 300    # SIL só aplicável para Um >= 300 kV
-PD_MIN_VOLTAGE = 72.5    # PD requerido para Um >= 72.5 kV
+# SIL aplicável para IEEE >= 161 kV e IEC/NBR >= 245 kV
+SIL_MIN_VOLTAGE_IEEE = 161.0    # SIL só aplicável para IEEE Um >= 161 kV
+SIL_MIN_VOLTAGE_IEC = 245.0     # SIL só aplicável para IEC/NBR Um >= 245 kV
+PD_MIN_VOLTAGE = 72.5           # PD requerido para Um >= 72.5 kV
 
 # --- Limites de Variação de Impedância (NBR 5356-5:2007 Tabela 2) ---
 # (Chaves devem corresponder aos values do Dropdown 'power-category')

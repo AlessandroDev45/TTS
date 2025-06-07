@@ -8,10 +8,21 @@ import threading
 import requests # Importação crucial
 
 class MCPDataManager:
-    def __init__(self, db_path: str = "tts_data.db"):
+    def __init__(self, db_path: Optional[str] = None):
+        # Se não especificado, usa path absoluto baseado no diretório do projeto
+        if db_path is None:
+            # Encontra o diretório raiz do projeto (onde deveria estar o tts_data.db)
+            current_file = os.path.abspath(__file__)
+            backend_dir = os.path.dirname(os.path.dirname(current_file))  # Sobe 2 níveis: mcp -> backend
+            tts_dir = os.path.dirname(backend_dir)  # Sobe mais 1: backend -> TTS
+            project_root = os.path.dirname(tts_dir)  # Sobe mais 1: TTS -> raiz (Downloads/TTS)
+            db_path = os.path.join(project_root, "tts_data.db")
+
         self.db_path = db_path
+        print(f"[MCPDataManager] Database path: {self.db_path}")
         self._memory_store: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.Lock()
+        self._auto_propagation_enabled = False  # Desabilitada por padrão para evitar problemas durante digitação
         
         # Definições dos stores, incluindo dependências e endpoints de atualização
         self.store_definitions = {
@@ -79,6 +90,16 @@ class MCPDataManager:
         
         self._init_database()
         self._load_all_stores()
+
+    def enable_auto_propagation(self):
+        """Habilita propagação automática"""
+        self._auto_propagation_enabled = True
+        print("[MCPDataManager] Propagação automática HABILITADA")
+
+    def disable_auto_propagation(self):
+        """Desabilita propagação automática"""
+        self._auto_propagation_enabled = False
+        print("[MCPDataManager] Propagação automática DESABILITADA")
     
     def _init_database(self):
         with sqlite3.connect(self.db_path) as conn:
@@ -179,8 +200,26 @@ class MCPDataManager:
             conn.commit()
 
     def _propagate_changes(self, updated_store_id: str):
+        # Verifica se a propagação automática está habilitada
+        if not self._auto_propagation_enabled:
+            print(f"[MCPDataManager] Propagação automática desabilitada para '{updated_store_id}' - pulando")
+            return
+
         print(f"[MCPDataManager] Iniciando propagação a partir de '{updated_store_id}'")
-        
+
+        # Para transformerInputs, só propaga se os dados estão completos o suficiente
+        if updated_store_id == 'transformerInputs':
+            transformer_data = self._memory_store.get('transformerInputs', {})
+            form_data = transformer_data.get('formData', {})
+
+            # Verifica se temos dados mínimos necessários para propagação
+            required_fields = ['potencia_mva', 'tensao_at', 'tensao_bt']
+            missing_fields = [field for field in required_fields if not form_data.get(field)]
+
+            if missing_fields:
+                print(f"[MCPDataManager] Propagação cancelada para '{updated_store_id}' - campos obrigatórios ausentes: {missing_fields}")
+                return
+
         # Encontra todos os stores que dependem DIRETAMENTE do store atualizado
         # e que têm um endpoint de atualização.
         dependent_calls_info = []
@@ -228,15 +267,26 @@ class MCPDataManager:
             # print(f"[MCPDataManager] Payload para {dependent_store_id}: {json.dumps(payload_for_dependent_module, indent=2)}") # Cuidado com payloads grandes
 
             try:
-                response = requests.post(full_url, json=payload_for_dependent_module, timeout=15)
-                response.raise_for_status()
-                print(f"[MCPDataManager] Sucesso ao chamar {full_url} para '{dependent_store_id}'. Status: {response.status_code}")
-                # O endpoint do módulo (ex: /api/transformer/modules/losses/process)
-                # fará o mcp_data_manager.patch_data(...), o que pode disparar mais propagações.
+                response = requests.post(full_url, json=payload_for_dependent_module, timeout=10)
+
+                if response.status_code == 200:
+                    print(f"[MCPDataManager] ✅ Sucesso ao chamar {full_url} para '{dependent_store_id}'")
+                else:
+                    print(f"[MCPDataManager] ⚠️ Resposta não-OK de {full_url} para '{dependent_store_id}': {response.status_code}")
+                    try:
+                        error_detail = response.json()
+                        print(f"[MCPDataManager] Detalhes do erro: {error_detail}")
+                    except:
+                        print(f"[MCPDataManager] Resposta não-JSON: {response.text[:200]}")
+
+            except requests.exceptions.Timeout:
+                print(f"[MCPDataManager] ⏱️ Timeout ao chamar {full_url} para '{dependent_store_id}' (>10s)")
+            except requests.exceptions.ConnectionError:
+                print(f"[MCPDataManager] 🔌 Erro de conexão ao chamar {full_url} para '{dependent_store_id}'")
             except requests.exceptions.RequestException as e:
-                print(f"[MCPDataManager] ERRO HTTP ao chamar {full_url} para '{dependent_store_id}': {e}")
+                print(f"[MCPDataManager] 🌐 Erro HTTP ao chamar {full_url} para '{dependent_store_id}': {e}")
             except Exception as e:
-                print(f"[MCPDataManager] ERRO INESPERADO ao processar propagação para '{dependent_store_id}' via {full_url}: {e}")
+                print(f"[MCPDataManager] ❌ Erro inesperado ao processar propagação para '{dependent_store_id}' via {full_url}: {e}")
         
         print(f"[MCPDataManager] Fim da propagação de mudanças para '{updated_store_id}'")
 

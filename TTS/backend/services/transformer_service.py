@@ -34,44 +34,57 @@ except ImportError as e:
 # Definir extract_and_process_transformer_inputs no escopo principal
 def extract_and_process_transformer_inputs(raw_inputs: Dict[str, Any]) -> Dict[str, Any]:
     processed_data = {}
-    # Mapeia todos os campos esperados de TransformerInputsData
-    fields_map = {
-        "potencia_mva": None, "frequencia": None, "tipo_transformador": "Trifásico", 
-        "grupo_ligacao": None, "liquido_isolante": "Mineral", "tipo_isolamento": "Uniforme", 
-        "norma_iso": "IEC", "elevacao_oleo_topo": None, "elevacao_enrol": None, 
-        "peso_parte_ativa": None, "peso_tanque_acessorios": None, "peso_oleo": None, 
-        "peso_total": None, "peso_adicional": None,
-        "tensao_at": None, "classe_tensao_at": None, "impedancia": None, "nbi_at": None, 
-        "sil_at": None, "conexao_at": None, "tensao_bucha_neutro_at": None, 
-        "nbi_neutro_at": None, "sil_neutro_at": None, "tensao_at_tap_maior": None, 
-        "tensao_at_tap_menor": None, "impedancia_tap_maior": None, 
-        "impedancia_tap_menor": None, "teste_tensao_aplicada_at": None, 
-        "teste_tensao_induzida_at": None,
-        "tensao_bt": None, "classe_tensao_bt": None, "nbi_bt": None, "sil_bt": None, 
-        "conexao_bt": None, "tensao_bucha_neutro_bt": None, "nbi_neutro_bt": None, 
-        "sil_neutro_bt": None, "teste_tensao_aplicada_bt": None,
-        "tensao_terciario": None, "classe_tensao_terciario": None, "nbi_terciario": None, 
-        "sil_terciario": None, "conexao_terciario": None, 
-        "tensao_bucha_neutro_terciario": None, "nbi_neutro_terciario": None, 
-        "sil_neutro_terciario": None, "teste_tensao_aplicada_terciario": None
+
+    # Campos que devem ser tratados como numéricos (float)
+    numeric_fields = {
+        "potencia_mva", "frequencia", "elevacao_oleo_topo", "elevacao_enrol",
+        "peso_parte_ativa", "peso_tanque_acessorios", "peso_oleo", "peso_total", "peso_adicional",
+        "tensao_at", "classe_tensao_at", "impedancia", "nbi_at", "sil_at",
+        "tensao_bucha_neutro_at", "nbi_neutro_at", "sil_neutro_at", "tensao_at_tap_maior",
+        "tensao_at_tap_menor", "impedancia_tap_maior", "impedancia_tap_menor",
+        "teste_tensao_aplicada_at", "teste_tensao_induzida_at",
+        "tensao_bt", "classe_tensao_bt", "nbi_bt", "sil_bt",
+        "tensao_bucha_neutro_bt", "nbi_neutro_bt", "sil_neutro_bt", "teste_tensao_aplicada_bt",
+        "tensao_terciario", "classe_tensao_terciario", "nbi_terciario", "sil_terciario",
+        "tensao_bucha_neutro_terciario", "nbi_neutro_terciario", "sil_neutro_terciario",
+        "teste_tensao_aplicada_terciario"
     }
 
-    for key, default_value in fields_map.items():
-        raw_value = raw_inputs.get(key)
-        if isinstance(default_value, (int, float)) or default_value is None and isinstance(raw_value, (int,float,str)): # Assumindo que None para numéricos
+    # Campos que devem ser tratados como strings
+    string_fields = {
+        "tipo_transformador", "grupo_ligacao", "liquido_isolante", "tipo_isolamento",
+        "norma_iso", "conexao_at", "conexao_bt", "conexao_terciario"
+    }
+
+    # Valores padrão para campos string
+    string_defaults = {
+        "tipo_transformador": "Trifásico",
+        "liquido_isolante": "Mineral",
+        "tipo_isolamento": "Uniforme",
+        "norma_iso": "IEC"
+    }
+
+    # Processa todos os campos dos dados de entrada
+    for key, raw_value in raw_inputs.items():
+        if key in numeric_fields:
+            # Trata como numérico
             processed_data[key] = safe_float_convert(raw_value)
-            if processed_data[key] is None and default_value is not None and isinstance(default_value, (int,float)): # Se falhou e havia default numérico
-                 processed_data[key] = default_value # Não faz sentido, pois o Pydantic já trata Optional
-        elif isinstance(default_value, str): # Para strings
-            processed_data[key] = raw_value if raw_value is not None else default_value
-        else: # Para outros tipos ou se raw_value for None e não houver default
-            processed_data[key] = raw_value if raw_value is not None else None
-            
-        # Se após o processamento o valor ainda for None e houver um default, aplicar o default
-        # (exceto para numéricos onde None é válido para Optional[float])
-        if processed_data[key] is None and default_value is not None and not (isinstance(default_value, (int, float))):
-            processed_data[key] = default_value
-    return processed_data # Adicionado para garantir que a função retorne processed_data
+        elif key in string_fields:
+            # Trata como string
+            if raw_value is not None and raw_value != "":
+                processed_data[key] = str(raw_value).strip()
+            else:
+                processed_data[key] = string_defaults.get(key, None)
+        else:
+            # Para outros campos, mantém o valor original
+            processed_data[key] = raw_value
+
+    # Aplica valores padrão para campos string que não foram fornecidos
+    for field, default_value in string_defaults.items():
+        if field not in processed_data or processed_data[field] is None:
+            processed_data[field] = default_value
+
+    return processed_data
 
 log = logging.getLogger(__name__)
 
@@ -94,24 +107,28 @@ def calculate_and_process_transformer_data(
     aos inputs do transformador.
     """
     log.info("Iniciando cálculo e processamento de dados do transformador.")
+    log.info(f"Dados de entrada recebidos: {transformer_inputs}")
 
     # 1. Processar e limpar os inputs brutos
     data_to_process = extract_and_process_transformer_inputs(transformer_inputs)
+    log.info(f"Dados após processamento: {data_to_process}")
 
     # Obter potência nominal e tipo de transformador no escopo principal
-    potencia_nominal = data_to_process.get("potencia_mva", 0)
+    potencia_nominal = data_to_process.get("potencia_mva") or 0
     tipo_transformador = data_to_process.get("tipo_transformador", "Trifásico")
     fator = 1.0 if tipo_transformador.lower() == "monofásico" else const.SQRT_3
 
+    log.info(f"Potência nominal: {potencia_nominal} (tipo: {type(potencia_nominal)}), Tipo: {tipo_transformador}, Fator: {fator}")
+
     # Função interna para calcular correntes nominais
     def _calculate_nominal_currents(data: Dict[str, Any], current_potencia_nominal: float, current_fator: float) -> Dict[str, float]:
-        tensao_at = data.get("tensao_at", 0)
-        tensao_bt = data.get("tensao_bt", 0)
-        tensao_terciario = data.get("tensao_terciario", 0)
-        
-        i_nom_at = (current_potencia_nominal * 1000) / (current_fator * tensao_at) if tensao_at > 0 else 0
-        i_nom_bt = (current_potencia_nominal * 1000) / (current_fator * tensao_bt) if tensao_bt > 0 else 0
-        i_nom_ter = (current_potencia_nominal * 1000) / (current_fator * tensao_terciario) if tensao_terciario > 0 else 0
+        tensao_at = data.get("tensao_at") or 0
+        tensao_bt = data.get("tensao_bt") or 0
+        tensao_terciario = data.get("tensao_terciario") or 0
+
+        i_nom_at = (current_potencia_nominal * 1000) / (current_fator * tensao_at) if tensao_at and tensao_at > 0 else 0
+        i_nom_bt = (current_potencia_nominal * 1000) / (current_fator * tensao_bt) if tensao_bt and tensao_bt > 0 else 0
+        i_nom_ter = (current_potencia_nominal * 1000) / (current_fator * tensao_terciario) if tensao_terciario and tensao_terciario > 0 else 0
 
         return {
             "i_nom_at": i_nom_at,
@@ -125,23 +142,25 @@ def calculate_and_process_transformer_data(
         "tensao_bt": data_to_process.get("tensao_bt"),
         "tensao_terciario": data_to_process.get("tensao_terciario"),
     }
+    log.info(f"Dados para cálculo de correntes: {currents_input_data}")
     calculated_currents = _calculate_nominal_currents(currents_input_data, potencia_nominal, fator)
+    log.info(f"Correntes calculadas: {calculated_currents}")
 
     data_to_process["corrente_nominal_at"] = calculated_currents.get("i_nom_at")
     data_to_process["corrente_nominal_bt"] = calculated_currents.get("i_nom_bt")
     data_to_process["corrente_nominal_terciario"] = calculated_currents.get("i_nom_ter")
     
     # Adicionar cálculo para correntes de tap
-    tensao_at_tap_maior = data_to_process.get("tensao_at_tap_maior", 0)
-    tensao_at_tap_menor = data_to_process.get("tensao_at_tap_menor", 0)
+    tensao_at_tap_maior = data_to_process.get("tensao_at_tap_maior")
+    tensao_at_tap_menor = data_to_process.get("tensao_at_tap_menor")
 
-    if potencia_nominal > 0 and fator > 0:
-        if tensao_at_tap_maior > 0:
+    if potencia_nominal and potencia_nominal > 0 and fator > 0:
+        if tensao_at_tap_maior is not None and tensao_at_tap_maior > 0:
             data_to_process["corrente_nominal_at_tap_maior"] = (potencia_nominal * 1000) / (fator * tensao_at_tap_maior)
         else:
             data_to_process["corrente_nominal_at_tap_maior"] = None
 
-        if tensao_at_tap_menor > 0:
+        if tensao_at_tap_menor is not None and tensao_at_tap_menor > 0:
             data_to_process["corrente_nominal_at_tap_menor"] = (potencia_nominal * 1000) / (fator * tensao_at_tap_menor)
         else:
             data_to_process["corrente_nominal_at_tap_menor"] = None
@@ -150,14 +169,14 @@ def calculate_and_process_transformer_data(
         data_to_process["corrente_nominal_at_tap_menor"] = None
 
     # 3. Calcular impedância base e indutância de curto-circuito (Seção 2.3)
-    potencia_mva = data_to_process.get("potencia_mva", 0)
-    tensao_at = data_to_process.get("tensao_at", 0)
-    impedancia_percentual = data_to_process.get("impedancia", 0)
-    frequencia = data_to_process.get("frequencia", 60)
+    potencia_mva = data_to_process.get("potencia_mva") or 0
+    tensao_at = data_to_process.get("tensao_at") or 0
+    impedancia_percentual = data_to_process.get("impedancia") or 0
+    frequencia = data_to_process.get("frequencia") or 60
 
-    z_base_at = (tensao_at**2 * 1000) / potencia_mva if potencia_mva > const.EPSILON else 0 # Ω
+    z_base_at = (tensao_at**2 * 1000) / potencia_mva if potencia_mva and potencia_mva > const.EPSILON else 0 # Ω
     z_cc_ohm = z_base_at * (impedancia_percentual / 100) if z_base_at > 0 else 0 # Ω
-    l_cc_henries = z_cc_ohm / (2 * const.PI * frequencia) if z_cc_ohm > 0 and frequencia > 0 else 0 # H
+    l_cc_henries = z_cc_ohm / (2 * const.PI * frequencia) if z_cc_ohm > 0 and frequencia and frequencia > 0 else 0 # H
 
     data_to_process["z_base_at_ohm"] = round(z_base_at, 4)
     data_to_process["z_cc_ohm"] = round(z_cc_ohm, 4)

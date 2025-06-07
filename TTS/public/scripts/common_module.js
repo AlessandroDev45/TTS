@@ -114,11 +114,22 @@ async function loadAndPopulateTransformerInfo(targetElementId) {
         const fillField = (elementId, value) => {
             const element = document.getElementById(elementId);
             if (element) {
-                element.textContent = value || '-';
+                // Verifica se o valor é um número e formata para 2 casas decimais, caso contrário usa '-'
+                if (typeof value === 'number' && !isNaN(value)) {
+                    element.textContent = value.toFixed(2);
+                } else {
+                    element.textContent = value || '-';
+                }
             }
         };        // Preenche os campos do template com os dados
         if (basicData && Object.keys(basicData).length > 0) {
             console.log("[common_module] loadAndPopulateTransformerInfo: Preenchendo painel com dados:", basicData);
+
+            // Destaca dados importantes para cálculos de perdas se estivermos na página de perdas
+            const isLossesPage = targetElementId.includes('losses');
+            if (isLossesPage) {
+                highlightInheritedDataForLosses(basicData);
+            }
 
             // Especificações Gerais
             fillField('info-potencia-mva', basicData.potencia_mva);
@@ -263,6 +274,49 @@ async function loadAndPopulateTransformerInfo(targetElementId) {
         `;
     } finally {
         console.log(`[common_module] loadAndPopulateTransformerInfo: Concluído para ${targetElementId}`);
+    }
+}
+
+// Função para destacar dados herdados importantes para cálculos de perdas
+function highlightInheritedDataForLosses(basicData) {
+    console.log('[common_module] highlightInheritedDataForLosses: Destacando dados importantes para perdas');
+
+    // Lista de campos importantes para perdas com suas descrições
+    const lossesImportantFields = [
+        { id: 'info-potencia-mva', field: 'potencia_mva', description: 'Usado em perdas em carga (perdas por unidade)' },
+        { id: 'info-frequencia', field: 'frequencia', description: 'Usado em perdas em vazio' },
+        { id: 'info-impedancia', field: 'impedancia', description: 'Usado em perdas em carga' },
+        { id: 'info-tensao-bt', field: 'tensao_bt', description: 'Usado em perdas em vazio' },
+        { id: 'info-corrente-nominal-bt', field: 'corrente_nominal_bt', description: 'Usado em perdas em vazio' },
+        { id: 'info-tipo-transformador', field: 'tipo_transformador', description: 'Usado para fatores de correção' }
+    ];
+
+    // Adiciona destaque visual e tooltip para campos importantes
+    lossesImportantFields.forEach(({ id, field, description }) => {
+        const element = document.getElementById(id);
+        if (element && basicData[field] !== undefined && basicData[field] !== null && basicData[field] !== '') {
+            // Adiciona classe de destaque
+            element.classList.add('inherited-data-highlight');
+
+            // Adiciona tooltip explicativo
+            const parentElement = element.parentElement;
+            if (parentElement) {
+                parentElement.setAttribute('title', `Herdado: ${description}`);
+                parentElement.classList.add('inherited-field-container');
+            }
+
+            console.log(`[common_module] Campo ${field} destacado como herdado para perdas:`, basicData[field]);
+        }
+    });
+
+    // Adiciona indicador visual no cabeçalho do painel
+    const cardHeader = document.querySelector('.info-card-header span');
+    if (cardHeader && !cardHeader.querySelector('.inheritance-indicator')) {
+        const indicator = document.createElement('small');
+        indicator.className = 'inheritance-indicator text-success ms-2';
+        indicator.innerHTML = '<i class="fas fa-link me-1"></i>Dados herdados para perdas';
+        indicator.title = 'Campos destacados são herdados automaticamente do Transformer Inputs';
+        cardHeader.appendChild(indicator);
     }
 }
 

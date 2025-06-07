@@ -216,8 +216,8 @@
     <!-- Rodapé (Footer) -->
         <footer class="mt-auto py-1" style="background-color: var(--background-card-header); border-top: 1px solid var(--border-color); box-shadow: 0 -1px 3px rgba(0,0,0,0.1);">
             <div class="container-fluid text-center">
-                <span class="text-muted" style="font-size: 0.7rem;">Transformer Test Simulator </span>
-                <span class="text-muted" style="font-size: 0.7rem; opacity: 0.7;">v1.0</span>
+                <span class="text-muted" style="font-size: 0.7rem;">&copy; <span id="current-year"></span> Transformer Test Simulator </span>
+                <span class="text-muted" style="font-size: 0.7rem; opacity: 0.7;">v5.4</span>
             </div>
         </footer>
     </div>
@@ -255,7 +255,63 @@
                 </div>
             </div>
         </div>
-    </div>    <!-- Bootstrap JS Bundle (JQuery não é mais necessário com Bootstrap 5) -->
+    </div>
+
+    <!-- Modal de Inicialização - Carregar ou Novo Projeto -->
+    <div class="modal fade" id="startupModal" tabindex="-1" aria-labelledby="startupModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--background-card); color: var(--text-light);">
+                <div class="modal-header" style="background-color: var(--primary); color: white;">
+                    <h5 class="modal-title" id="startupModalLabel">
+                        <i class="fas fa-database me-2"></i>Dados Encontrados
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-question-circle" style="font-size: 3rem; color: var(--primary);"></i>
+                    </div>
+                    <p class="text-center mb-4" style="color: var(--text-light);">
+                        Foram encontrados dados salvos de um projeto anterior.
+                        O que você gostaria de fazer?
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="card" style="border-color: var(--success); background-color: var(--background-input);">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-folder-open mb-2" style="font-size: 2rem; color: var(--success);"></i>
+                                    <h6 class="card-title" style="color: var(--text-light);">Continuar Projeto</h6>
+                                    <p class="card-text small" style="color: var(--text-muted);">
+                                        Carregar todos os dados salvos e continuar de onde parou
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card" style="border-color: var(--warning); background-color: var(--background-input);">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-plus-circle mb-2" style="font-size: 2rem; color: var(--warning);"></i>
+                                    <h6 class="card-title" style="color: var(--text-light);">Novo Projeto</h6>
+                                    <p class="card-text small" style="color: var(--text-muted);">
+                                        Limpar todos os dados e começar um novo projeto
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background-color: var(--background-card); border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-success btn-lg flex-fill me-2" id="continueProjectButton">
+                        <i class="fas fa-folder-open me-2"></i>Continuar Projeto
+                    </button>
+                    <button type="button" class="btn btn-warning btn-lg flex-fill" id="newProjectButton">
+                        <i class="fas fa-plus-circle me-2"></i>Novo Projeto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle (JQuery não é mais necessário com Bootstrap 5) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     
     <!-- Plotly.js para gráficos avançados -->

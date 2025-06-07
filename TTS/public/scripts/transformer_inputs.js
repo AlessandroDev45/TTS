@@ -71,8 +71,9 @@ async function saveTransformerInputsAndTriggerCalculations() {
         impedancia: getNumericValueOrNull('impedancia'),
         nbi_at: getNumericValueOrNull('nbi_at'),
         sil_at: getNumericValueOrNull('sil_at'),
+        sil_at: getNumericValueOrNull('sil_at'),
         conexao_at: getStringValueOrNull('conexao_at'),
-        tensao_bucha_neutro_at: getNumericValueOrNull('tensao_bucha_neutro_at'),
+        tensao_bucha_neutro_at: getStringValueOrNull('tensao_bucha_neutro_at'), // Alterado para getStringValueOrNull
         nbi_neutro_at: getNumericValueOrNull('nbi_neutro_at'),
         sil_neutro_at: getNumericValueOrNull('sil_neutro_at'),
         tensao_at_tap_maior: getNumericValueOrNull('tensao_at_tap_maior'),
@@ -87,7 +88,7 @@ async function saveTransformerInputsAndTriggerCalculations() {
         nbi_bt: getNumericValueOrNull('nbi_bt'),
         sil_bt: getNumericValueOrNull('sil_bt'),
         conexao_bt: getStringValueOrNull('conexao_bt'),
-        tensao_bucha_neutro_bt: getNumericValueOrNull('tensao_bucha_neutro_bt'),
+        tensao_bucha_neutro_bt: getStringValueOrNull('tensao_bucha_neutro_bt'), // Alterado para getStringValueOrNull
         nbi_neutro_bt: getNumericValueOrNull('nbi_neutro_bt'),
         sil_neutro_bt: getNumericValueOrNull('sil_neutro_bt'),
         teste_tensao_aplicada_bt: getNumericValueOrNull('teste_tensao_aplicada_bt'),
@@ -97,12 +98,11 @@ async function saveTransformerInputsAndTriggerCalculations() {
         nbi_terciario: getNumericValueOrNull('nbi_terciario'),
         sil_terciario: getNumericValueOrNull('sil_terciario'),
         conexao_terciario: getStringValueOrNull('conexao_terciario'),
-        tensao_bucha_neutro_terciario: getNumericValueOrNull('tensao_bucha_neutro_terciario'),
+        tensao_bucha_neutro_terciario: getStringValueOrNull('tensao_bucha_neutro_terciario'), // Alterado para getStringValueOrNull
         nbi_neutro_terciario: getNumericValueOrNull('nbi_neutro_terciario'),
         sil_neutro_terciario: getNumericValueOrNull('sil_neutro_terciario'),
         teste_tensao_aplicada_terciario: getNumericValueOrNull('teste_tensao_aplicada_terciario')
     };
-
     console.log('[transformer_inputs.js - saveTransformerInputsAndTriggerCalculations] Dados coletados (inputData) antes do envio:', inputData);
 
     try {
@@ -262,36 +262,44 @@ async function initTransformerInputs() {
     // Não é ela que dispara os cálculos diretamente, mas mantém o estado do formulário.
     await setupFormPersistence('transformer-inputs-form-container', 'transformerInputs');
 
-    // 2. Inicializa os dropdowns de isolamento (isso vai popular as opções)
-    await initializeIsolationDropdowns();
-
-    // 3. Preenche o formulário com dados do store, SE EXISTIREM.
-    // Isso inclui os valores selecionados para os dropdowns de isolamento.
+    // 2. Carrega dados do store PRIMEIRO
+    let existingData = null;
     if (window.apiDataSystem) {
         const store = window.apiDataSystem.getStore('transformerInputs');
-        const existingData = await store.getData(); // Busca do backend/cache
-        if (existingData) {
-            let dataToFill = existingData.formData || existingData; // Lida com ambas estruturas
-             if (Object.keys(dataToFill).length > 0) {
-                const formElement = document.getElementById('transformer-inputs-form-container');
-                if (formElement) {
-                    console.log("[transformer_inputs.js - initTransformerInputs] Preenchendo formulário com dados do store:", dataToFill);
-                    window.fillFormWithData(formElement, dataToFill); // Usa a função global
-                }
-            } else {
-                 console.log("[transformer_inputs.js - initTransformerInputs] Nenhum dado de formData encontrado no store para preencher o formulário.");
+        existingData = await store.getData(); // Busca do backend/cache
+        console.log("[transformer_inputs.js - initTransformerInputs] Dados carregados do store:", existingData);
+    }
+
+    // 3. Inicializa os dropdowns de isolamento PRIMEIRO (sem dados)
+    console.log("[transformer_inputs.js - initTransformerInputs] Inicializando dropdowns de isolamento...");
+    await initializeIsolationDropdowns();
+
+    // 4. DEPOIS preenche o formulário com os dados salvos (incluindo NBI/SIL)
+    if (existingData) {
+        let dataToFill = existingData.formData || existingData; // Lida com ambas estruturas
+        if (Object.keys(dataToFill).length > 0) {
+            const formElement = document.getElementById('transformer-inputs-form-container');
+            if (formElement) {
+                console.log("[transformer_inputs.js - initTransformerInputs] Preenchendo formulário com dados salvos:", dataToFill);
+                window.fillFormWithData(formElement, dataToFill); // Usa a função global
+
+                // 5. FORÇA re-população dos dropdowns NBI/SIL e Tensões de Ensaio baseado nos dados carregados
+                console.log("[transformer_inputs.js - initTransformerInputs] Forçando re-população dos dropdowns NBI/SIL e Tensões de Ensaio...");
+                await forceRepopulateNbiSilDropdowns(dataToFill);
             }
+        } else {
+            console.log("[transformer_inputs.js - initTransformerInputs] Nenhum dado de formData encontrado no store para preencher o formulário.");
         }
     }
 
-    // 4. Preenche os campos de corrente nominal com base nos dados já calculados (se houver)
+    // 6. Preenche os campos de corrente nominal com base nos dados já calculados (se houver)
     await fillNominalCurrentsFromStore();
 
-    // 5. Configura listeners para que qualquer alteração nos inputs dispare
+    // 6. Configura listeners para que qualquer alteração nos inputs dispare
     //    a função saveTransformerInputsAndTriggerCalculations (que faz o POST).
     setupAutoSaveAndRecalculateTrigger();
 
-    // 6. Configura listeners para a visibilidade dos campos de neutro
+    // 7. Configura listeners para a visibilidade dos campos de neutro
     const enrolamentoPrefixos = ['at', 'bt', 'terciario'];
     enrolamentoPrefixos.forEach(prefixo => {
         const conexaoDropdown = document.getElementById(`conexao_${prefixo}`);
@@ -318,6 +326,101 @@ async function initTransformerInputs() {
     });
 
     console.log('[transformer_inputs.js - initTransformerInputs] Concluído.');
+}
+
+// Função para forçar re-população dos dropdowns NBI/SIL e Tensões de Ensaio com dados salvos
+async function forceRepopulateNbiSilDropdowns(formData) {
+    console.log("[transformer_inputs.js - forceRepopulateNbiSilDropdowns] Iniciando com dados:", formData);
+
+    // Lista de campos NBI/SIL que precisam ser re-populados
+    const nbiSilFields = [
+        { prefix: 'at', nbiField: 'nbi_at', silField: 'sil_at' },
+        { prefix: 'at', nbiField: 'nbi_neutro_at', silField: 'sil_neutro_at' },
+        { prefix: 'bt', nbiField: 'nbi_bt', silField: 'sil_bt' },
+        { prefix: 'bt', nbiField: 'nbi_neutro_bt', silField: 'sil_neutro_bt' },
+        { prefix: 'terciario', nbiField: 'nbi_terciario', silField: 'sil_terciario' },
+        { prefix: 'terciario', nbiField: 'nbi_neutro_terciario', silField: 'sil_neutro_terciario' }
+    ];
+
+    // Lista de campos de tensão de ensaio que precisam ser re-populados
+    const testVoltageFields = [
+        'teste_tensao_aplicada_at',
+        'teste_tensao_induzida_at',
+        'teste_tensao_aplicada_bt',
+        'teste_tensao_aplicada_terciario'
+    ];
+
+    for (const field of nbiSilFields) {
+        const nbiValue = formData[field.nbiField];
+        const silValue = formData[field.silField];
+
+        if (nbiValue !== undefined && nbiValue !== null) {
+            const nbiElement = document.getElementById(field.nbiField);
+            if (nbiElement) {
+                // Força o valor no dropdown
+                nbiElement.value = String(nbiValue);
+                console.log(`[forceRepopulateNbiSilDropdowns] Forçando ${field.nbiField} = ${nbiValue}`);
+
+                // Se o valor não existe nas opções, adiciona temporariamente
+                if (nbiElement.value !== String(nbiValue)) {
+                    const option = document.createElement('option');
+                    option.value = String(nbiValue);
+                    option.textContent = String(nbiValue);
+                    option.setAttribute('data-temp', 'true'); // Marca como temporária
+                    nbiElement.appendChild(option);
+                    nbiElement.value = String(nbiValue);
+                    console.log(`[forceRepopulateNbiSilDropdowns] Adicionada opção temporária para ${field.nbiField}: ${nbiValue}`);
+                }
+            }
+        }
+
+        if (silValue !== undefined && silValue !== null) {
+            const silElement = document.getElementById(field.silField);
+            if (silElement) {
+                // Força o valor no dropdown
+                silElement.value = String(silValue);
+                console.log(`[forceRepopulateNbiSilDropdowns] Forçando ${field.silField} = ${silValue}`);
+
+                // Se o valor não existe nas opções, adiciona temporariamente
+                if (silElement.value !== String(silValue)) {
+                    const option = document.createElement('option');
+                    option.value = String(silValue);
+                    option.textContent = String(silValue);
+                    option.setAttribute('data-temp', 'true'); // Marca como temporária
+                    silElement.appendChild(option);
+                    silElement.value = String(silValue);
+                    console.log(`[forceRepopulateNbiSilDropdowns] Adicionada opção temporária para ${field.silField}: ${silValue}`);
+                }
+            }
+        }
+    }
+
+    // Processa campos de tensão de ensaio
+    for (const fieldId of testVoltageFields) {
+        const fieldValue = formData[fieldId];
+
+        if (fieldValue !== undefined && fieldValue !== null) {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                // Força o valor no dropdown
+                element.value = String(fieldValue);
+                console.log(`[forceRepopulateNbiSilDropdowns] Forçando ${fieldId} = ${fieldValue}`);
+
+                // Se o valor não existe nas opções, adiciona temporariamente
+                if (element.value !== String(fieldValue)) {
+                    const option = document.createElement('option');
+                    option.value = String(fieldValue);
+                    option.textContent = String(fieldValue);
+                    option.setAttribute('data-temp', 'true'); // Marca como temporária
+                    element.appendChild(option);
+                    element.value = String(fieldValue);
+                    console.log(`[forceRepopulateNbiSilDropdowns] Adicionada opção temporária para ${fieldId}: ${fieldValue}`);
+                }
+            }
+        }
+    }
+
+    console.log("[transformer_inputs.js - forceRepopulateNbiSilDropdowns] Concluído.");
 }
 
 document.addEventListener('moduleContentLoaded', (event) => {

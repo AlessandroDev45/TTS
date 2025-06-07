@@ -4,110 +4,204 @@
         <span>INFORMAÇÕES DO TRANSFORMADOR</span>
         <i class="fas fa-info-circle" title="Dados do Transformador (Completo)"></i>
     </div>
-    <div class="card-body p-1 info-card-body">
-        <div class="row">
-            <!-- COLUNA 1 -->
-            <div class="col-md-7">
-                <!-- GRUPO 1: DADOS GERAIS - LINHA 1 -->
-                <div class="row g-1 mb-1 info-group-general">
-                    <div class="col-auto"><strong class="info-title-general">GERAL:</strong></div>
-                    <div class="col-auto"><strong>Pot:</strong> <span id="info-potencia-mva">-</span>MVA</div>
-                    <div class="col-auto"><strong>Hz:</strong> <span id="info-frequencia">-</span></div>
-                    <div class="col-auto"><strong>Tipo:</strong> <span id="info-tipo-transformador">-</span></div>
-                    <div class="col-auto"><strong>Grupo:</strong> <span id="info-grupo-ligacao">-</span></div>
-                    <div class="col-auto"><strong>Isolante:</strong> <span id="info-liquido-isolante">-</span></div>
-                    <div class="col-auto"><strong>Norma:</strong> <span id="info-norma-iso">-</span></div>
-                    <div class="col-auto"><strong>Óleo:</strong> <span id="info-elevacao-oleo-topo">-</span>°C</div>
-                    <div class="col-auto"><strong>Enr:</strong> <span id="info-elevacao-enrol">-</span>°C</div>
-                </div>
+    <div class="card-body p-2 info-card-body">
+        <!-- TABELA SIMPLES E ORGANIZADA -->
+        <table class="transformer-table">
+            <!-- CABEÇALHO -->
+            <thead>
+                <tr class="header-row">
+                    <th class="col-general">DADOS GERAIS</th>
+                    <th class="divider-thick"></th>
+                    <th class="col-at" colspan="4">ALTA TENSÃO (AT)</th>
+                    <th class="divider-thick"></th>
+                    <th class="col-bt" colspan="2">BAIXA TENSÃO (BT)</th>
+                    <th class="divider-thick"></th>
+                    <th class="col-terc" colspan="2">TERCIÁRIO</th>
+                    <th class="divider-thick"></th>
+                    <th class="col-pesos">PESOS</th>
+                </tr>
+                <tr class="subheader-row">
+                    <th></th>
+                    <th class="divider-thick"></th>
+                    <th class="sub-at">TAP AT-</th>
+                    <th class="sub-at">Nominal</th>
+                    <th class="sub-at">TAP AT+</th>
+                    <th class="sub-at">Neutro</th>
+                    <th class="divider-thick"></th>
+                    <th class="sub-bt">Linha</th>
+                    <th class="sub-bt">Neutro</th>
+                    <th class="divider-thick"></th>
+                    <th class="sub-terc">Linha</th>
+                    <th class="sub-terc">Neutro</th>
+                    <th class="divider-thick"></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Linha 1: Potência / Tensão -->
+                <tr class="data-row">
+                    <td class="label-cell">Potência: <span id="info-potencia-mva">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Tensão: <span id="info-tensao-at-tap-menor">-</span></td>
+                    <td class="value-cell">Tensão: <span id="info-tensao-at">-</span></td>
+                    <td class="value-cell">Tensão: <span id="info-tensao-at-tap-maior">-</span></td>
+                    <td class="value-cell">Tensão: <span id="info-tensao-neutro-at">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Tensão: <span id="info-tensao-bt">-</span></td>
+                    <td class="value-cell">Classe Neutro: <span id="info-classe-neutro-bt">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Tensão: <span id="info-tensao-terciario">-</span></td>
+                    <td class="value-cell">Classe Neutro: <span id="info-classe-neutro-terciario">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">P.Ativa: <span id="info-peso-parte-ativa">-</span></td>
+                </tr>
 
-                <!-- DIVISÓRIA -->
-                <div class="info-divider-main"></div>
+                <!-- Linha 2: Frequência / Corrente -->
+                <tr class="data-row">
+                    <td class="label-cell">Frequência: <span id="info-frequencia">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Corrente: <span id="info-corrente-nominal-at-tap-menor">-</span></td>
+                    <td class="value-cell">Corrente: <span id="info-corrente-nominal-at">-</span></td>
+                    <td class="value-cell">Corrente: <span id="info-corrente-nominal-at-tap-maior">-</span></td>
+                    <td class="value-cell">Corrente: <span id="info-corrente-neutro-at">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Corrente: <span id="info-corrente-nominal-bt">-</span></td>
+                    <td class="value-cell">NBI Neutro: <span id="info-nbi-neutro-bt">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Corrente: <span id="info-corrente-nominal-terciario">-</span></td>
+                    <td class="value-cell">NBI Neutro: <span id="info-nbi-neutro-terciario">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Tanque: <span id="info-peso-tanque">-</span></td>
+                </tr>
 
-                <!-- GRUPO 2: PESOS E IMPEDÂNCIAS - LINHA 2 -->
-                <div class="row g-1 mb-1 info-group-pesos">
-                    <div class="col-auto"><strong class="info-title-pesos">PESOS:</strong></div>
-                    <div class="col-auto"><strong>Total:</strong> <span id="info-peso-total">-</span>t</div>
-                    <div class="col-auto"><strong>Ativo:</strong> <span id="info-peso-parte-ativa">-</span>t</div>
-                    <div class="col-auto"><strong>Óleo:</strong> <span id="info-peso-oleo">-</span>t</div>
-                    <div class="col-auto"><strong>Cuba:</strong> <span id="info-peso-tanque">-</span>t</div>
-                    <div class="col-auto"><strong>Isolamento:</strong> <span id="info-tipo-isolamento">-</span></div>
-                </div>
+                <!-- Linha 3: Tipo / Classe -->
+                <tr class="data-row">
+                    <td class="label-cell">Tipo: <span id="info-tipo-transformador">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Classe: <span id="info-classe-tensao-at-tap-menor">-</span></td>
+                    <td class="value-cell">Classe: <span id="info-classe-tensao-at">-</span></td>
+                    <td class="value-cell">Classe: <span id="info-classe-tensao-at-tap-maior">-</span></td>
+                    <td class="value-cell">Classe Neutro: <span id="info-classe-neutro-at">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Classe: <span id="info-classe-tensao-bt">-</span></td>
+                    <td class="value-cell">SIL/IM Neutro: <span id="info-sil-im-neutro-bt">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Classe: <span id="info-classe-tensao-terciario">-</span></td>
+                    <td class="value-cell">SIL/IM Neutro: <span id="info-sil-im-neutro-terciario">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Óleo: <span id="info-peso-oleo">-</span></td>
+                </tr>
 
-                <!-- DIVISÓRIA -->
-                <div class="info-divider-primary"></div>
+                <!-- Linha 4: Grupo / Conexão -->
+                <tr class="data-row">
+                    <td class="label-cell">Grupo: <span id="info-grupo-ligacao">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Conexão: <span id="info-conexao-at-tap-menor">-</span></td>
+                    <td class="value-cell">Conexão: <span id="info-conexao-at">-</span></td>
+                    <td class="value-cell">Conexão: <span id="info-conexao-at-tap-maior">-</span></td>
+                    <td class="value-cell">Conexão: <span id="info-conexao-neutro-at">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Conexão: <span id="info-conexao-bt">-</span></td>
+                    <td class="value-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Conexão: <span id="info-conexao-terciario">-</span></td>
+                    <td class="value-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">Total: <span id="info-peso-total">-</span></td>
+                </tr>
 
-                <!-- GRUPO 3: ALTA TENSÃO (AT) - LINHA 3 -->
-                <div class="row g-1 mb-1 info-group-at">
-                    <div class="col-auto"><strong class="info-title-at">AT:</strong></div>
-                    <div class="col-auto"><strong>V:</strong> <span id="info-tensao-at">-</span>kV</div>
-                    <div class="col-auto"><strong>Classe:</strong> <span id="info-classe-tensao-at">-</span>kV</div>
-                    <div class="col-auto"><strong>I:</strong> <span id="info-corrente-nominal-at">-</span>A</div>
-                    <div class="col-auto"><strong>Z%:</strong> <span id="info-impedancia">-</span>%</div>
-                    <div class="col-auto"><strong>NBI:</strong> <span id="info-nbi-at">-</span>kV</div>
-                    <div class="col-auto"><strong>Conexão:</strong> <span id="info-conexao-at">-</span></div>
-                    <div class="col-auto"><strong>T.Apl:</strong> <span id="info-teste-tensao-aplicada-at">-</span>kV</div>
-                    <div class="col-auto"><strong>T.Ind:</strong> <span id="info-teste-tensao-induzida-at">-</span>kV</div>
-                </div>
+                <!-- Linha 5: Norma / NBI -->
+                <tr class="data-row">
+                    <td class="label-cell">Norma: <span id="info-norma-iso">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">NBI/BIL: <span id="info-nbi-at-tap-menor">-</span></td>
+                    <td class="value-cell">NBI/BIL: <span id="info-nbi-at">-</span></td>
+                    <td class="value-cell">NBI/BIL: <span id="info-nbi-at-tap-maior">-</span></td>
+                    <td class="value-cell">NBI Neutro: <span id="info-nbi-neutro-at">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">NBI/BIL: <span id="info-nbi-bt">-</span></td>
+                    <td class="value-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">NBI/BIL: <span id="info-nbi-terciario">-</span></td>
+                    <td class="value-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">-</td>
+                </tr>
 
-                <!-- GRUPO 3b: TAPs AT (Sub-grupo do AT) - LINHA 4 -->
-                <div class="row g-1 info-group-at-taps"> <!-- mb-1 removido do original e adicionado aqui -->
-                    <div class="col-auto"><strong class="info-title-at-taps">TAPs AT:</strong></div>
-                    <div class="col-auto"><strong>V+:</strong> <span id="info-tensao-at-tap-maior">-</span>kV</div>
-                    <div class="col-auto"><strong>V-:</strong> <span id="info-tensao-at-tap-menor">-</span>kV</div>
-                    <div class="col-auto"><strong>I+:</strong> <span id="info-corrente-nominal-at-tap-maior">-</span>A</div>
-                    <div class="col-auto"><strong>I-:</strong> <span id="info-corrente-nominal-at-tap-menor">-</span>A</div>
-                    <div class="col-auto"><strong>Z+:</strong> <span id="info-impedancia-tap-maior">-</span>%</div>
-                    <div class="col-auto"><strong>Z-:</strong> <span id="info-impedancia-tap-menor">-</span>%</div>
-                    <div class="col-auto"><strong>Degrau:</strong> <span id="info-degrau-comutador">-</span>%</div>
-                    <div class="col-auto"><strong>Qtd:</strong> <span id="info-num-degraus-comutador">-</span></div>
-                    <div class="col-auto"><strong>Pos:</strong> <span id="info-posicao-comutador">-</span></div>
-                </div>
-            </div> <!-- Fim da COLUNA 1 -->
+                <!-- Linha 6: Elev. Óleo / SIL/IM -->
+                <tr class="data-row">
+                    <td class="label-cell">Elev. Óleo: <span id="info-elevacao-oleo-topo">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">SIL/IM: <span id="info-sil-im-at-tap-menor">-</span></td>
+                    <td class="value-cell">SIL/IM: <span id="info-sil-im-at">-</span></td>
+                    <td class="value-cell">SIL/IM: <span id="info-sil-im-at-tap-maior">-</span></td>
+                    <td class="value-cell">SIL/IM Neutro: <span id="info-sil-im-neutro-at">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">SIL/IM: <span id="info-sil-im-bt">-</span></td>
+                    <td class="value-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">SIL/IM: <span id="info-sil-im-terciario">-</span></td>
+                    <td class="value-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">-</td>
+                </tr>
 
-            <!-- COLUNA 2 -->
-            <div class="col-md-5">
-                <!-- GRUPO 4: BAIXA TENSÃO (BT) - LINHA 5 -->
-                <div class="row g-1 mb-1 info-group-bt">
-                    <div class="col-auto"><strong class="info-title-bt">BT:</strong></div>
-                    <div class="col-auto"><strong>V:</strong> <span id="info-tensao-bt">-</span>kV</div>
-                    <div class="col-auto"><strong>Classe:</strong> <span id="info-classe-tensao-bt">-</span>kV</div>
-                    <div class="col-auto"><strong>I:</strong> <span id="info-corrente-nominal-bt">-</span>A</div>
-                    <div class="col-auto"><strong>NBI:</strong> <span id="info-nbi-bt">-</span>kV</div>
-                    <div class="col-auto"><strong>Conexão:</strong> <span id="info-conexao-bt">-</span></div>
-                    <div class="col-auto"><strong>T.Apl:</strong> <span id="info-teste-tensao-aplicada-bt">-</span>kV</div>
-                </div>
+                <!-- Linha 7: Elev. Enrol. / IAC -->
+                <tr class="data-row">
+                    <td class="label-cell">Elev. Enrol.: <span id="info-elevacao-enrol">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">IAC: <span id="info-iac-at-tap-menor">-</span></td>
+                    <td class="value-cell">IAC: <span id="info-iac-at">-</span></td>
+                    <td class="value-cell">IAC: <span id="info-iac-at-tap-maior">-</span></td>
+                    <td class="value-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">IAC: <span id="info-iac-bt">-</span></td>
+                    <td class="value-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">IAC: <span id="info-iac-terciario">-</span></td>
+                    <td class="value-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">-</td>
+                </tr>
 
-                <!-- DIVISÓRIA -->
-                <div class="info-divider-warning"></div>
+                <!-- Linha 8: APLICADA -->
+                <tr class="data-row">
+                    <td class="label-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">APLICADA: <span id="info-teste-tensao-aplicada-at-tap-menor">-</span></td>
+                    <td class="value-cell">APLICADA: <span id="info-teste-tensao-aplicada-at">-</span></td>
+                    <td class="value-cell">APLICADA: <span id="info-teste-tensao-aplicada-at-tap-maior">-</span></td>
+                    <td class="value-cell">APLICADA: <span id="info-teste-tensao-aplicada-neutro-at">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">APLICADA: <span id="info-teste-tensao-aplicada-bt">-</span></td>
+                    <td class="value-cell">APLICADA: <span id="info-teste-tensao-aplicada-neutro-bt">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">APLICADA: <span id="info-teste-tensao-aplicada-terciario">-</span></td>
+                    <td class="value-cell">APLICADA: <span id="info-teste-tensao-aplicada-neutro-terciario">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">-</td>
+                </tr>
 
-                <!-- GRUPO 5: TERCIÁRIO - LINHA 6 -->
-                <div class="row g-1 mb-1 info-group-terciario">
-                    <div class="col-auto"><strong class="info-title-terciario">TERC:</strong></div>
-                    <div class="col-auto"><strong>V:</strong> <span id="info-tensao-terciario">-</span>kV</div>
-                    <div class="col-auto"><strong>Classe:</strong> <span id="info-classe-tensao-terciario">-</span>kV</div>
-                    <div class="col-auto"><strong>I:</strong> <span id="info-corrente-nominal-terciario">-</span>A</div>
-                    <div class="col-auto"><strong>NBI:</strong> <span id="info-nbi-terciario">-</span>kV</div>
-                    <div class="col-auto"><strong>Conexão:</strong> <span id="info-conexao-terciario">-</span></div>
-                    <div class="col-auto"><strong>T.Apl:</strong> <span id="info-teste-tensao-aplicada-terciario">-</span>kV</div>
-                    <div class="col-auto"><strong>Z.AT-TERC:</strong> <span id="info-impedancia-at-terciario">-</span>%</div>
-                    <div class="col-auto"><strong>Z.BT-TERC:</strong> <span id="info-impedancia-bt-terciario">-</span>%</div>
-                </div>
-
-                <!-- DIVISÓRIA -->
-                <div class="info-divider-info"></div>
-
-                <!-- GRUPO 6: ENSAIOS E PERDAS - LINHA 7 -->
-                <div class="row g-1 mb-0 info-group-ensaios">
-                    <div class="col-auto"><strong class="info-title-ensaios">ENSAIOS:</strong></div>
-                    <div class="col-auto"><strong>Perdas0:</strong> <span id="info-perdas-vazio">-</span>W</div>
-                    <div class="col-auto"><strong>PerdasCC:</strong> <span id="info-perdas-curto-circuito">-</span>W</div>
-                    <div class="col-auto"><strong>Corrente0:</strong> <span id="info-corrente-excitacao">-</span>%</div>
-                    <div class="col-auto"><strong>Fator K:</strong> <span id="info-fator-k">-</span></div>
-                    <div class="col-auto"><strong>Classe:</strong> <span id="info-classe-precisao">-</span></div>
-                    <div class="col-auto"><strong>Freq.Res:</strong> <span id="info-frequencia-ressonancia">-</span>Hz</div>
-                </div>
-            </div> <!-- Fim da COLUNA 2 -->
-        </div> <!-- Fim da row principal das colunas -->
+                <!-- Linha 9: INDUZIDA -->
+                <tr class="data-row">
+                    <td class="label-cell">-</td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">INDUZIDA: <span id="info-teste-tensao-induzida-at-tap-menor">-</span></td>
+                    <td class="value-cell">INDUZIDA: <span id="info-teste-tensao-induzida-at">-</span></td>
+                    <td class="value-cell">INDUZIDA: <span id="info-teste-tensao-induzida-at-tap-maior">-</span></td>
+                    <td class="value-cell">INDUZIDA: <span id="info-teste-tensao-induzida-neutro-at">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">INDUZIDA: <span id="info-teste-tensao-induzida-bt">-</span></td>
+                    <td class="value-cell">INDUZIDA: <span id="info-teste-tensao-induzida-neutro-bt">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">INDUZIDA: <span id="info-teste-tensao-induzida-terciario">-</span></td>
+                    <td class="value-cell">INDUZIDA: <span id="info-teste-tensao-induzida-neutro-terciario">-</span></td>
+                    <td class="divider-thick"></td>
+                    <td class="value-cell">-</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
+
+

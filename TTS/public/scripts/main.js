@@ -329,17 +329,118 @@ document.addEventListener('DOMContentLoaded', async () => { // Tornar o listener
             }
         }
         loadModulePage(moduleToLoad, false);
-    });    async function initializeAppRouting() { // Tornar a função assíncrona
+    });    // Função para verificar se existem dados salvos
+    async function checkForExistingData() {
+        try {
+            const apiSystem = await waitForApiSystem();
+            if (!apiSystem) return false;
+
+            await apiSystem.init();
+
+            // Verifica se há dados no store principal (transformerInputs)
+            const store = apiSystem.getStore('transformerInputs');
+            const data = await store.getData();
+
+            // Considera que há dados se formData existe e tem pelo menos um campo preenchido
+            if (data && data.formData && Object.keys(data.formData).length > 0) {
+                // Verifica se há pelo menos um valor não-nulo/não-vazio
+                const hasData = Object.values(data.formData).some(value =>
+                    value !== null && value !== undefined && value !== ''
+                );
+                return hasData;
+            }
+
+            return false;
+        } catch (error) {
+            console.error('[checkForExistingData] Erro ao verificar dados existentes:', error);
+            return false;
+        }
+    }
+
+    // Função para limpar todos os dados
+    async function clearAllData() {
+        try {
+            const apiSystem = await waitForApiSystem();
+            if (!apiSystem) return;
+
+            // Lista de stores conhecidos para limpar
+            const storesToClear = ['transformerInputs', 'losses', 'shortCircuit', 'history'];
+
+            for (const storeId of storesToClear) {
+                try {
+                    const store = apiSystem.getStore(storeId);
+                    await store.updateData({}); // Limpa o store
+                    console.log(`[clearAllData] Store '${storeId}' limpo.`);
+                } catch (error) {
+                    console.warn(`[clearAllData] Erro ao limpar store '${storeId}':`, error);
+                }
+            }
+
+            console.log('[clearAllData] Todos os dados foram limpos.');
+        } catch (error) {
+            console.error('[clearAllData] Erro ao limpar dados:', error);
+        }
+    }
+
+    // Função para mostrar modal de inicialização
+    async function showStartupModal() {
+        return new Promise((resolve) => {
+            const startupModalElement = document.getElementById('startupModal');
+            if (!startupModalElement) {
+                resolve('continue'); // Default se modal não existir
+                return;
+            }
+
+            const startupModal = new bootstrap.Modal(startupModalElement);
+
+            const continueButton = document.getElementById('continueProjectButton');
+            const newProjectButton = document.getElementById('newProjectButton');
+
+            const handleContinue = () => {
+                startupModal.hide();
+                resolve('continue');
+            };
+
+            const handleNewProject = async () => {
+                startupModal.hide();
+                await clearAllData();
+                resolve('new');
+            };
+
+            // Remove listeners anteriores se existirem
+            if (continueButton) {
+                continueButton.replaceWith(continueButton.cloneNode(true));
+                document.getElementById('continueProjectButton').addEventListener('click', handleContinue);
+            }
+
+            if (newProjectButton) {
+                newProjectButton.replaceWith(newProjectButton.cloneNode(true));
+                document.getElementById('newProjectButton').addEventListener('click', handleNewProject);
+            }
+
+            startupModal.show();
+        });
+    }
+
+    async function initializeAppRouting() { // Tornar a função assíncrona
         // Aguarda o sistema de persistência estar disponível
         console.log('[initializeAppRouting] Aguardando sistema de persistência...');
         const apiSystem = await waitForApiSystem(); // Usa a função importada diretamente
-        
+
         if (apiSystem) {
             console.log('[initializeAppRouting] Inicializando sistema de persistência...');
             await apiSystem.init();
             console.log('[initializeAppRouting] Sistema de persistência inicializado.');
         } else {
             console.warn('[initializeAppRouting] Sistema de persistência não encontrado após aguardar.');
+        }
+
+        // Verifica se existem dados salvos e mostra modal se necessário
+        const hasExistingData = await checkForExistingData();
+        if (hasExistingData) {
+            console.log('[initializeAppRouting] Dados existentes encontrados. Mostrando modal de escolha...');
+            const userChoice = await showStartupModal();
+            console.log(`[initializeAppRouting] Usuário escolheu: ${userChoice}`);
         }
 
         const initialHash = window.location.hash.substring(1);
@@ -465,3 +566,9 @@ function autoCleanCache() {
 autoCleanCache();
 
 console.log("🔧 Sistema de cache automático ativo. Cache será limpo automaticamente quando necessário.");
+document.addEventListener('DOMContentLoaded', function() {
+    const currentYearSpan = document.getElementById('current-year');
+    if (currentYearSpan) {
+        currentYearSpan.textContent = new Date().getFullYear();
+    }
+});

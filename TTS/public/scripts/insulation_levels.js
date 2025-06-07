@@ -89,9 +89,25 @@ function getIsolationLevelsForClass(umKvValue, standard) {
 }
 
 async function populateDependentIsolationDropdowns(enrolamentoPrefixo, classeTensaoValue) {
+    console.log(`[insulation_levels] populateDependentIsolationDropdowns para ${enrolamentoPrefixo}, classe: ${classeTensaoValue}`);
     await loadIsolationLevelData(); // Garante que tabela.json está carregado
+    if (!isolationLevelsCache || !isolationLevelsCache.insulation_levels) {
+        console.error('[insulation_levels] Dados de isolamento não disponíveis para dependentes.');
+        return;
+    }
+
     const normaSelect = document.getElementById('norma_iso');
     const selectedNorma = (normaSelect && normaSelect.value) ? normaSelect.value : 'IEC';
+    console.log(`[insulation_levels] Norma selecionada: ${selectedNorma}`);
+
+    // Obter a lista de classes de tensão (um_kv) para a norma selecionada
+    const umKvValues = [...new Set(
+        isolationLevelsCache.insulation_levels
+            .filter(item => item.standard && item.standard.toUpperCase().startsWith(selectedNorma.toUpperCase()))
+            .map(item => Number(item.um_kv))
+    )].sort((a, b) => a - b);
+    const classeTensaoOptions = umKvValues.map(val => ({ label: `${val} kV`, value: String(val) }));
+    console.log(`[insulation_levels] Opções de Classe Tensão geradas:`, classeTensaoOptions);
 
     const levels = getIsolationLevelsForClass(classeTensaoValue, selectedNorma);
 
@@ -99,13 +115,20 @@ async function populateDependentIsolationDropdowns(enrolamentoPrefixo, classeTen
     const silDropdown = document.getElementById(`sil_${enrolamentoPrefixo}`);
     const taDropdown = document.getElementById(`teste_tensao_aplicada_${enrolamentoPrefixo}`);
     const tiDropdown = enrolamentoPrefixo === 'at' ? document.getElementById(`teste_tensao_induzida_at`) : null;
+    
+    // Novos dropdowns para Classe Neutro, NBI Neutro e SIL Neutro
+    const classeNeutroDropdown = document.getElementById(`tensao_bucha_neutro_${enrolamentoPrefixo}`);
     const nbiNeutroDropdown = document.getElementById(`nbi_neutro_${enrolamentoPrefixo}`);
     const silNeutroDropdown = document.getElementById(`sil_neutro_${enrolamentoPrefixo}`);
 
     const nbiOptions = (levels.bil_kvp || []).map(v => ({ label: `${v} kVp`, value: String(v) }));
     let silOptions = [{ label: "Não Aplicável", value: "" }]; // Default
-    if (levels.sil_kvp && levels.sil_kvp.length > 0 && levels.sil_kvp[0] !== null && levels.sil_kvp[0] !== "NA_SIL") {
-        silOptions = levels.sil_kvp.map(v => ({ label: `${v} kVp`, value: String(v) }));
+
+    // Para IEEE, usar BSL (bsl_kvp), para IEC/NBR usar SIL (sil_kvp)
+    const isIEEE = selectedNorma.toUpperCase().includes("IEEE");
+    const silData = isIEEE ? levels.bsl_kvp : levels.sil_kvp;
+    if (silData && silData.length > 0 && silData[0] !== null && silData[0] !== "NA_SIL") {
+        silOptions = silData.map(v => ({ label: `${v} kVp`, value: String(v) }));
     }
     const taOptions = (levels.acsd_kv_rms || []).map(v => ({ label: `${v} kVrms`, value: String(v) }));
     let tiOptions = [];
@@ -113,23 +136,42 @@ async function populateDependentIsolationDropdowns(enrolamentoPrefixo, classeTen
         tiOptions = levels.acld_kv_rms.map(v => ({ label: `${v} kVrms`, value: String(v) }));
     }
 
-    // Para neutro: A lógica de derivação ou busca em tabela.json precisa ser implementada
-    // Por ora, usaremos as mesmas opções do principal como placeholder se não houver dados específicos.
-    // Idealmente, tabela.json teria campos como `bil_neutro_kvp`.
-    const nbiNeutroOptions = nbiOptions; // Placeholder
-    const silNeutroOptions = silOptions; // Placeholder
+    // Para neutro: Popula Classe Neutro com as mesmas opções de Classe Tensão
+    if (classeNeutroDropdown) {
+        console.log(`[insulation_levels] Populando dropdown de Classe Neutro para ${enrolamentoPrefixo}. Elemento encontrado.`);
+        populateDropdown(classeNeutroDropdown, classeTensaoOptions, true, classeNeutroDropdown.value);
+        console.log(`[insulation_levels] Dropdown de Classe Neutro para ${enrolamentoPrefixo} populado.`);
+    } else {
+        console.warn(`[insulation_levels] Dropdown de Classe Neutro para ${enrolamentoPrefixo} (ID tensao_bucha_neutro_${enrolamentoPrefixo}) não encontrado.`);
+    }
+
+    // Para NBI Neutro e SIL Neutro: A lógica de derivação ou busca em tabela.json precisa ser implementada
+    // Por ora, vamos popular com base na CLASSE NEUTRO selecionada (se houver)
+    // Isso requer um listener no dropdown de Classe Neutro, que será adicionado depois.
+    // Por enquanto, populamos com opções vazias ou baseadas na classe principal como fallback.
+    // A lógica correta seria: obter a classe neutro selecionada, buscar os níveis de isolamento para essa classe, e popular NBI/SIL Neutro.
+    // Como placeholder, vamos popular com as mesmas opções do principal, mas isso NÃO é o comportamento final correto.
+    // TODO: Implementar a lógica de dependência de NBI/SIL Neutro na Classe Neutro selecionada.
+    const nbiNeutroOptions = nbiOptions; // Placeholder - DEVE DEPENDER DA CLASSE NEUTRO
+    const silNeutroOptions = silOptions; // Placeholder - DEVE DEPENDER DA CLASSE NEUTRO
 
     populateDropdown(nbiDropdown, nbiOptions, true, nbiDropdown ? nbiDropdown.value : null);
     populateDropdown(silDropdown, silOptions, true, silDropdown ? silDropdown.value : null);
     populateDropdown(taDropdown, taOptions, true, taDropdown ? taDropdown.value : null);
     if (tiDropdown) populateDropdown(tiDropdown, tiOptions, true, tiDropdown.value);
+    
+    // Popula NBI Neutro e SIL Neutro (usando placeholders por enquanto)
     populateDropdown(nbiNeutroDropdown, nbiNeutroOptions, true, nbiNeutroDropdown ? nbiNeutroDropdown.value : null);
     populateDropdown(silNeutroDropdown, silNeutroOptions, true, silNeutroDropdown ? silNeutroDropdown.value : null);
     
-    // Visibilidade do SIL
+    // Visibilidade do SIL principal
     const silCol = document.getElementById(`sil_${enrolamentoPrefixo}_col`);
     if (silCol) {
-        const threshold = selectedNorma.toUpperCase() === "IEEE" ? 69.0 : 72.5;
+        // Thresholds corretos baseados nos dados disponíveis na tabela JSON
+        // IEEE: BSL disponível a partir de 161 kV
+        // IEC/NBR: SIL disponível a partir de 245 kV
+        const isIEEE = selectedNorma.toUpperCase().includes("IEEE");
+        const threshold = isIEEE ? 161.0 : 245.0;
         const umKvNum = parseFloat(classeTensaoValue);
         const showSil = umKvNum && umKvNum >= threshold && silOptions.length > 0 && !(silOptions.length === 1 && silOptions[0].value === "");
         silCol.style.display = showSil ? "block" : "none"; // Usar block ou ""
@@ -184,6 +226,21 @@ function setupIsolationDropdownListeners() {
             conexaoDropdown._listenerAttached = true;
             conexaoDropdown._eventHandler = handler;
         }
+
+        // Listener para classe neutro para controlar visibilidade do SIL neutro
+        const classeNeutroDropdown = document.getElementById(`tensao_bucha_neutro_${prefix}`);
+        if (classeNeutroDropdown) {
+            if (classeNeutroDropdown._listenerAttached) classeNeutroDropdown.removeEventListener('change', classeNeutroDropdown._eventHandler);
+            const handler = () => {
+                const conexaoDropdown = document.getElementById(`conexao_${prefix}`);
+                if (conexaoDropdown) {
+                    toggleNeutralFieldsVisibility(prefix, conexaoDropdown.value);
+                }
+            };
+            classeNeutroDropdown.addEventListener('change', handler);
+            classeNeutroDropdown._listenerAttached = true;
+            classeNeutroDropdown._eventHandler = handler;
+        }
     });
 }
 
@@ -217,7 +274,37 @@ function toggleNeutralFieldsVisibility(enrolamentoPrefixo, conexaoValue) {
     if (tensaoBuchaNeutroCol) {
         tensaoBuchaNeutroCol.style.display = hasNeutral ? "block" : "none"; // ou "flex" se for um .col
     }
-    
+
+    // Controlar visibilidade do SIL neutro baseado na tensão da classe neutro
+    if (hasNeutral) {
+        const classeNeutroDropdown = document.getElementById(`tensao_bucha_neutro_${enrolamentoPrefixo}`);
+        const silNeutroDropdown = document.getElementById(`sil_neutro_${enrolamentoPrefixo}`);
+
+        if (classeNeutroDropdown && silNeutroDropdown) {
+            const normaSelect = document.getElementById('norma_iso');
+            const selectedNorma = (normaSelect && normaSelect.value) ? normaSelect.value.toUpperCase() : 'IEC';
+            const isIEEE = selectedNorma.includes("IEEE");
+            const threshold = isIEEE ? 161.0 : 245.0;
+            const classeNeutroValue = parseFloat(classeNeutroDropdown.value);
+
+            // Mostrar/ocultar SIL neutro baseado no threshold de tensão
+            const showSilNeutro = classeNeutroValue && classeNeutroValue >= threshold;
+
+            // Controlar visibilidade da coluna inteira do SIL neutro (label + dropdown)
+            const silNeutroCol = silNeutroDropdown.closest('.col-6');
+            if (silNeutroCol) {
+                silNeutroCol.style.display = showSilNeutro ? "block" : "none";
+            } else {
+                // Fallback: controlar apenas o dropdown se não encontrar a coluna
+                silNeutroDropdown.style.display = showSilNeutro ? "block" : "none";
+            }
+
+            if (!showSilNeutro) {
+                silNeutroDropdown.value = "";
+            }
+        }
+    }
+
     // Limpar valores se os campos forem ocultados
     if (!hasNeutral) {
         const idsToClear = [
